@@ -4,8 +4,3 @@
 	Licence : CeCILL-C
 '''
 
-
-from .mchdf5eventsource import MCHDF5EventSource
-
-
-

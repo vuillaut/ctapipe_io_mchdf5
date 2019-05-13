@@ -1,3 +1,9 @@
+'''
+	Auteur : Pierre Aubert
+	Mail : aubertp7@gmail.com
+	Licence : CeCILL-C
+'''
+
 from ctapipe.io.eventsource import EventSource
 from ctapipe.io.containers import DataContainer
 from numpy import stack, zeros, swapaxes, array, int16, uint64
