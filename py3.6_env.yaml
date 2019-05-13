@@ -1,0 +1,13 @@
+channels:
+  - default
+  - cta-observatory
+  - conda-forge
+dependencies:
+  - python=3.6 # nail the python version, so conda does not try upgrading / dowgrading
+  - numpy>=1.15.4
+  - numpydoc
+  - pytest
+  - pytables
+  - pip:
+      - pytest_runner
+      - https://github.com/cta-observatory/ctapipe-extra/archive/v0.2.16.tar.gz

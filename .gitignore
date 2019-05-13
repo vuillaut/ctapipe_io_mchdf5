@@ -1,0 +1,5 @@
+*.kdev4
+build
+dist
+ctapipe_io_mchdf5.egg-info
+__pycache__
