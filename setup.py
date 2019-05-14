@@ -22,8 +22,8 @@ setup(
         'numpy>=1.14.0', 
 	'tables>=3.4.4',
 	'pyhessio @ https://api.github.com/repos/cta-observatory/pyhessio/tarball/v2.1.1',
-	'ctapipe @ https://api.github.com/repos/cta-observatory/ctapipe/tarball/v0.6.2',
-	'ctapipe-extra @ https://api.github.com/repos/cta-observatory/ctapipe-extra/tarball/v0.2.16'
+	'ctapipe @ https://api.github.com/repos/cta-observatory/ctapipe/tarball/',
+	'ctapipe-extra @ https://api.github.com/repos/cta-observatory/ctapipe-extra/tarball/'
     ],
     tests_require=['pytest'],
     setup_requires=['pytest_runner'],
