@@ -65,6 +65,34 @@ class ThrowEventDistribution(tables.IsDescription):
 class MCEvent(tables.IsDescription):
 	'''
 	Simulated corsika event
+	Attributes
+	----------
+	event_id : tables.UInt64Col
+		Shower event id.
+	mc_alt : tables.Float32Col
+		Shower altitude (zenith) angle. From Monte Carlo simulation parameters.
+	mc_az : tables.Float32Col
+		Shower azimuth angle. From Monte Carlo simulation parameters.
+	mc_core_x : tables.Float32Col
+		Shower core position x coordinate. From Monte Carlo simulation
+		parameters.
+	mc_core_y : tables.Float32Col
+		Shower core position y coordinate. From Monte Carlo simulation
+		parameters.
+	mc_energy : tables.Float32Col
+		Energy of the shower primary particle. From Monte Carlo simulation
+		parameters.
+	mc_h_first_int : tables.Float32Col
+		Height of shower primary particle first interaction. From Monte Carlo
+		simulation parameters.
+	mc_shower_primary_id : tables.UInt8Col
+		Particle type id for the shower primary particle. From Monte Carlo
+		simulation parameters.
+	mc_x_max : tables.Float32Col
+		Atmospheric depth of shower maximum [g/cm^2], derived from all charged particles
+	obs_id : tables.UInt64Col
+		Shower observation (run) id. Replaces old "run_id" in ctapipe r0
+		container.
 	'''
 	event_id = tables.UInt64Col()
 	mc_alt = tables.Float32Col()
@@ -675,15 +703,11 @@ def main():
 	source = event_source(inputFileName)
 	
 	nb_event = 0
-	max_event = 0
+	max_event = 10000000
 	if args.max_event != None:
 		max_event = int(args.max_event)
 
 	for event in source:
-		#I found the timestamp
-		eventTimeStamp = np.float64(event.trig.gps_time.value)
-		obsId = event.r0.obs_id
-		eventId = event.r0.event_id
 		appendCorsikaEvent(tableMcCorsikaEvent, event)
 		appendEventTelescopeData(fileh, event)
 		nb_event+=1
