@@ -143,7 +143,7 @@ class TriggerInfo(tables.IsDescription):
 	obs_id = tables.UInt64Col()
 
 
-def createTelGroupAndTable(fileh, telIndex, telType, telId, telInfo):
+def createTelGroupAndTable(fileh, telIndex, telId, telInfo):
 	'''
 	Create the telescope group and table
 	It is important not to add an other dataset with the type of the camera to simplify the serach of a telescope by telescope index in the file structure
@@ -151,7 +151,6 @@ def createTelGroupAndTable(fileh, telIndex, telType, telId, telInfo):
 	-----------
 		fileh : HDF5 file to be used
 		telIndex : index of the group to be created for the given telescope type
-		telType : type fo the telescope (0 : LST, 1 : NECTAR, 2 : FLASH, 3 : SCT, 4 : ASTRI, 5 : DC, 6 : GCT)
 		telId : id of the telescope
 		telInfo : table of some informations related to the telescope
 	'''
@@ -159,6 +158,7 @@ def createTelGroupAndTable(fileh, telIndex, telType, telId, telInfo):
 	
 	fileh.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events")
 	
+	telType = telInfo[4]
 	tabRefShape = np.asarray(telInfo[0], dtype=np.float32)
 	nbSample = tabRefShape.shape[1]
 	nbGain = np.uint64(tabRefShape.shape[0])
@@ -245,18 +245,17 @@ def createFileStructure(fileh, telInfo_from_evt):
 	-----------
 		fileh : HDF5 file to be used
 		telInfo_from_evt : information of telescopes
-		
+	Return:
+	-------
+		table of mc_event
 	'''
 	#Group : r1
 	r1Group = fileh.create_group("/", 'r1', 'Raw data waveform informations of the run')
 	eventR1Group = fileh.create_group("/r1", 'event', 'Raw data waveform events')
 	
 	#The group in the r1 group will be completed on the fly with the informations collected in telInfo_from_evt
-	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items):
-		telType = np.uint64(getCameraTypeFromName(telInfo.camera.cam_id))
-		createTelGroupAndTable(fileh, telIndex, telType, telId, telInfo)
-		
-	
+	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
+		createTelGroupAndTable(fileh, telIndex, telId, telInfo)
 	
 	#Group : instrument
 	instrumentGroup = fileh.create_group("/", 'instrument', 'Instrument informations of the run')
@@ -283,30 +282,63 @@ def createFileStructure(fileh, telInfo_from_evt):
 	tableRunConfig = fileh.create_table(simulationGroup, 'run_config', RunConfigEvent, "Configuration of the simulated events")
 	tableThrowEventDistribution = fileh.create_table(simulationGroup, 'thrown_event_distribution', ThrowEventDistribution, "Distribution of the simulated events")
 	tableMcEvent = fileh.create_table(simulationGroup, 'mc_event', MCEvent, "All simulated Corsika events")
+	return tableMcEvent
+
+
+
+
+
+
+
+def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
+	'''
+	Get the telescope information from the event
+	Parameters:
+	-----------
+		inputFileName : name of the input file to be used
+		max_nb_tel : maximum number of telescope in the simulation
+	Return:
+	-------
+		dictionnnary which contains the telescope informations (ref_shape, nb_slice, ped, gain) with telescope id as key
+	'''
+	telescope_info = dict() # Key is tel id, value (ref_shape, slice, ped, gain, telType, focalLen, tabPixelX, tabPixelY)
+	source = event_source(inputFileName)
 	
-
-
-
-
-
-
-	
-def getTelescopeInfoFromEvent(source, telescope_info, max_nb_tel): 
-	for evt in source: 
+	dicoTelInfo = None
+	for evt in source:
+		if dicoTelInfo is None:
+			dicoTelInfo = evt.inst.subarray.tel
 		for tel_id in evt.r0.tels_with_data:
 			if not tel_id in telescope_info:
 				ref_shape = evt.mc.tel[tel_id].reference_pulse_shape
 				nb_slice = evt.r0.tel[tel_id].waveform.shape[2]
 				ped = evt.mc.tel[tel_id].pedestal
 				gain =  evt.mc.tel[tel_id].dc_to_pe
-				telescope_info[tel_id] = (ref_shape, nb_slice, ped, gain)
+				
+				telInfo = dicoTelInfo[tel_id]
+				telType = np.uint64(getCameraTypeFromName(telInfo.camera.cam_id))
+				focalLen = np.float32(telInfo.optics.equivalent_focal_length.value)
+				
+				tabPixelX = np.asarray(telInfo.camera.pix_x, dtype=np.float32)
+				tabPixelY = np.asarray(telInfo.camera.pix_y, dtype=np.float32)
+				
+				telescope_info[tel_id] = (ref_shape, nb_slice, ped, gain, telType, focalLen, tabPixelX, tabPixelY)
 		if len(telescope_info) >= max_nb_tel:
-			return
-	
+			return telescope_info
+	return telescope_info
 
 
-
-def getNbTel(source):
+def getNbTel(inputFileName):
+	'''
+	Get the number of telescope in the simulation file
+	Parameters:
+	-----------
+		inputFileName : name of the input file to be used
+	Return:
+	-------
+		number of telescopes in the simulation file
+	'''
+	source = event_source(inputFileName)
 	itSource = iter(source)
 	evt0 = next(itSource)
 	nbTel = evt0.inst.subarray.num_tels
@@ -464,21 +496,26 @@ def appendCorsikaEvent(tableMcCorsikaEvent, event):
 		tableMcCorsikaEvent : table of Corsika events to be completed
 		event : Monte Carlo event to be used
 	'''
-	tableMcCorsikaEvent['eventId'] = np.uint64(event.r0.event_id)
-	tableMcCorsikaEvent['obsId'] = np.uint64(event.r0.obs_id)
-	tableMcCorsikaEvent['showerPrimaryId'] = np.uint8(event.mc.shower_primary_id)
-	tableMcCorsikaEvent['coreX'] = np.float32(event.mc.core_x)
-	tableMcCorsikaEvent['coreY'] = np.float32(event.mc.core_y)
-	tableMcCorsikaEvent['h_first_int'] = np.float32(event.mc.h_first_int)
-	tableMcCorsikaEvent['xmax'] = np.float32(event.mc.x_max)
-	tableMcCorsikaEvent['energy'] = np.float32(event.mc.energy)
-	tableMcCorsikaEvent['az'] = np.float32(event.mc.az)
-	tableMcCorsikaEvent['alt'] = np.float32(event.mc.alt)
+	tableMcCorsikaEvent['event_id'] = np.uint64(event.r0.event_id)
+	tableMcCorsikaEvent['mc_az'] = np.float32(event.mc.az)
+	tableMcCorsikaEvent['mc_alt'] = np.float32(event.mc.alt)
+	
+	tableMcCorsikaEvent['mc_core_x'] = np.float32(event.mc.core_x)
+	tableMcCorsikaEvent['mc_core_y'] = np.float32(event.mc.core_y)
+	
+	tableMcCorsikaEvent['mc_energy'] = np.float32(event.mc.energy)
+	tableMcCorsikaEvent['mc_h_first_int'] = np.float32(event.mc.h_first_int)
+	tableMcCorsikaEvent['mc_shower_primary_id'] = np.uint8(event.mc.shower_primary_id)
+	
+	tableMcCorsikaEvent['mc_x_max'] = np.float32(event.mc.x_max)
+	
+	tableMcCorsikaEvent['obs_id'] = np.uint64(event.r0.obs_id)
+	
 	#I don't know where to find the following informations but they exist in C version
-	tableMcCorsikaEvent['depthStart'] = np.float32(0.0)
-	tableMcCorsikaEvent['hmax'] = np.float32(0.0)
-	tableMcCorsikaEvent['emax'] = np.float32(0.0)
-	tableMcCorsikaEvent['cmax'] = np.float32(0.0)
+	#tableMcCorsikaEvent['depthStart'] = np.float32(0.0)
+	#tableMcCorsikaEvent['hmax'] = np.float32(0.0)
+	#tableMcCorsikaEvent['emax'] = np.float32(0.0)
+	#tableMcCorsikaEvent['cmax'] = np.float32(0.0)
 	
 	tableMcCorsikaEvent.append()
 
@@ -496,8 +533,7 @@ def createGroupOfAllTelescope(fileh, nbTel, source):
 	evt0 = next(itSource)
 	dicoTelInfo = evt0.inst.subarray.tel
 	
-	telInfo_from_evt = dict() # Key is tel id, value (ref_shape, slice, ped, gain)
-	getTelescopeInfoFromEvent(source, telInfo_from_evt, nbTel)
+	
 	
 	for telIndexIter in range(0, nbTel):
 		telInfo = dicoTelInfo[telIndexIter + 1]
@@ -575,19 +611,28 @@ def appendWaveformInTelescope(telNode, waveform, eventId, timeStamp):
 		timeStamp : time of the event in UTC
 	'''
 	#We transpose the waveform :
-	tabEventId = telNode.eventId.row
-	tabEventId['eventId'] = eventId
-		
-	tabTimestamp = telNode.timestamp.row
-	tabTimestamp['timestamp'] = timeStamp
-	   
-	tabWaveform = telNode.waveform.row
-	tabWaveform['waveform'] = np.swapaxes(waveform,1 , 2)
 	
+	
+	tabtrigger = telNode.trigger.row
+	tabtrigger['event_id'] = eventId
+	
+	tabtrigger = telNode.timestamp.row
+	#TODO : use the proper convertion from timeStamp to the time in second and nanosecond
+	tabtrigger['time_s'] = timeStamp
+	tabtrigger['time_qns'] = timeStamp
+	
+	
+	tabWaveformHi = telNode.waveformHi.row
+	tabWaveformHi['waveformHi'] = np.swapaxes(waveform[0], 0, 1)
+	
+	if waveform.shape[0] > 1:
+		tabWaveformLo = telNode.waveformLo.row
+		tabWaveformLo['waveformLo'] = np.swapaxes(waveform[1], 0, 1)
+		tabWaveformLo.append()
    
 	tabEventId.append()
 	tabTimestamp.append()
-	tabWaveform.append()
+	tabWaveformHi.append()
 
 
 def appendEventTelescopeData(fileh, event):
@@ -603,7 +648,7 @@ def appendEventTelescopeData(fileh, event):
 	for telId in tabTelWithData:
 		waveform = dicoTel[telId].waveform
 		#print('waveform.shape:', waveform.shape)
-		telNode = fileh.get_node("/Tel", 'Tel_' + str(telId - 1))
+		telNode = fileh.get_node("/r1", 'Tel_' + str(telId - 1))
 		appendWaveformInTelescope(telNode, waveform, event.r0.event_id, event.trig.gps_time.value)
 		
 
@@ -617,24 +662,18 @@ def main():
 						required=False, type=int)
 	args = parser.parse_args()
 
-	source = event_source(args.input)
-	nbTel = getNbTel(source)
+	inputFileName = args.input
+	nbTel = getNbTel(inputFileName)
 	print("Number of telescope : ",nbTel)
+	telInfo_from_evt = getTelescopeInfoFromEvent(inputFileName, nbTel)
+	
 	fileh = tables.open_file(args.output, mode = "w")
-
-	createRunHeader(fileh, source)
-	#We can set the Monte Carlo values durring the iteration on source
-	print('createCosrika')
-	tableMcCorsikaEvent = createCosrika(fileh, source)
-
-	#Create the group of all telescopes
-	allTelGroup = fileh.create_group("/", 'Tel', 'Telescopes data')
-	#Create all the telescopes in the /Tel group
-	print('createGroupOfAllTelescope start')
-	createGroupOfAllTelescope(fileh, nbTel, source)
-	print('createGroupOfAllTelescope done')
-
-
+	
+	print('Create file structure')
+	tableMcCorsikaEvent = createFileStructure(fileh, telInfo_from_evt)
+	
+	source = event_source(inputFileName)
+	
 	nb_event = 0
 	max_event = 0
 	if args.max_event != None:
