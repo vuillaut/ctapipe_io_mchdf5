@@ -53,11 +53,10 @@ install:
     - ulimit -s 16000  # increase stack size limit, for libhessio
     - pip install travis-sphinx
     - pip install codecov
-    - python setup.py develop
+    - python setup.py install
 
 script:
-    - pytest --cov=ctapipe
-    - ctapipe-info --version # print out the version string
+    - pytest --cov=ctapipe_io_mchdf5
     - travis-sphinx -v --outdir=docbuild build --source=docs/
 
 after_script:
