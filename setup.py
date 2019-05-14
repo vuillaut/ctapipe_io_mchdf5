@@ -25,6 +25,11 @@ setup(
 		'ctapipe-extra',
 		'pytest-cov'
 	],
+	package_data={
+		'ctapipe_io_mchdf5': [
+			'tests/resources/*'
+		],
+	},
 	tests_require=['pytest'],
 	setup_requires=['pytest_runner'],
 	author='Pierre Aubert',
