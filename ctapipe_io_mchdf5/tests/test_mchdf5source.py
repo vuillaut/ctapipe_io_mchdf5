@@ -87,10 +87,10 @@ def test_compare_with_simtel():
 
 
 def test_loop_over_telescopes():
-	from ctapipe.io.hipehdf5eventsource import HiPeHDF5EventSource
+	from ctapipe_io_mchdf5 import MCHDF5EventSource
 
 	n_events = 10
-	inputfile_reader = HiPeHDF5EventSource(input_url=example_file_path)
+	inputfile_reader = MCHDF5EventSource(input_url=example_file_path)
 	i = 0
 	for tel in inputfile_reader.run.walk_nodes('/Tel', 'Group'):
 		try:
@@ -103,8 +103,8 @@ def test_loop_over_telescopes():
 
 
 def test_is_compatible():
-	from ctapipe.io.hipehdf5eventsource import HiPeHDF5EventSource
-	assert HiPeHDF5EventSource.is_compatible(example_file_path)
+	from ctapipe_io_mchdf5 import MCHDF5EventSource
+	assert MCHDF5EventSource.is_compatible(example_file_path)
 
 
 
