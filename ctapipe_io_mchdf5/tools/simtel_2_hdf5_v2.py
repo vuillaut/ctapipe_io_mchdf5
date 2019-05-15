@@ -120,9 +120,9 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 	for evt in source:
 		if dicoTelInfo is None:
 			dicoTelInfo = evt.inst.subarray.tel
-			posTelX = np.asarray(evt0.inst.subarray.tel_coords.x, dtype=np.float32)
-			posTelY = np.asarray(evt0.inst.subarray.tel_coords.y, dtype=np.float32)
-			posTelZ = np.asarray(evt0.inst.subarray.tel_coords.z, dtype=np.float32)
+			posTelX = np.asarray(evt.inst.subarray.tel_coords.x, dtype=np.float32)
+			posTelY = np.asarray(evt.inst.subarray.tel_coords.y, dtype=np.float32)
+			posTelZ = np.asarray(evt.inst.subarray.tel_coords.z, dtype=np.float32)
 		for tel_id in evt.r0.tels_with_data:
 			if not tel_id in telescope_info:
 				ref_shape = evt.mc.tel[tel_id].reference_pulse_shape
@@ -421,42 +421,42 @@ class TriggerInfo(tables.IsDescription):
 	obs_id = tables.UInt64Col()
 
 
-def createTelGroupAndTable(hfile, telIndex, telId, telInfo):
+def createTelGroupAndTable(hfile, telId, telInfo):
 	'''
 	Create the telescope group and table
 	It is important not to add an other dataset with the type of the camera to simplify the serach of a telescope by telescope index in the file structure
 	Parameters:
 	-----------
 		hfile : HDF5 file to be used
-		telIndex : index of the group to be created for the given telescope type
 		telId : id of the telescope
 		telInfo : table of some informations related to the telescope
 	'''
-	camTelGroup = hfile.create_group("/r1", "Tel_"+telIndex, 'Data of telescopes '+telIndex)
+	telIndex = telId - 1
+	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telIndex), 'Data of telescopes '+str(telIndex))
 	
 	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events")
 	
-	telType = telInfo[TELINFO_TELTYPE]
+	telType = np.uint64(telInfo[TELINFO_TELTYPE])
 	tabRefShape = np.asarray(telInfo[TELINFO_REFSHAPE], dtype=np.float32)
-	nbSample = tabRefShape.shape[1]
+	nbSample = np.uint64(tabRefShape.shape[1])
 	nbGain = np.uint64(tabRefShape.shape[0])
-	nbSlice = telInfo[TELINFO_NBSLICE]
+	nbSlice = np.uint64(telInfo[TELINFO_NBSLICE])
 	
 	tabGain = np.asarray(telInfo[TELINFO_GAIN])
 	tabPed = np.asarray(telInfo[TELINFO_PEDESTAL])
 	
-	nbPixel = tabPed.shape[-1]
+	nbPixel = np.uint64(tabPed.shape[-1])
 	
-	hfile.create_array(telGroup, 'nbPixel', nbPixel, "Number of pixels of the telescope")
-	hfile.create_array(telGroup, 'nbSlice', nbSlice, "Number of slices of the telescope")
-	hfile.create_array(telGroup, 'nbGain', nbGain, "Number of gain (channels) of the telescope")
+	hfile.create_array(camTelGroup, 'nbPixel', nbPixel, "Number of pixels of the telescope")
+	hfile.create_array(camTelGroup, 'nbSlice', nbSlice, "Number of slices of the telescope")
+	hfile.create_array(camTelGroup, 'nbGain', nbGain, "Number of gain (channels) of the telescope")
 
-	hfile.create_array(telGroup, 'telIndex', telIndex, "Index of the telescope")
-	hfile.create_array(telGroup, 'telType', telType, "Type of the telescope (0 : LST, 1 : NECTAR, 2 : FLASH, 3 : SCT, 4 : ASTRI, 5 : DC, 6 : GCT)")
-	hfile.create_array(telGroup, 'telId', telId, "Id of the telescope")
+	hfile.create_array(camTelGroup, 'telIndex', telIndex, "Index of the telescope")
+	hfile.create_array(camTelGroup, 'telType', telType, "Type of the telescope (0 : LST, 1 : NECTAR, 2 : FLASH, 3 : SCT, 4 : ASTRI, 5 : DC, 6 : GCT)")
+	hfile.create_array(camTelGroup, 'telId', telId, "Id of the telescope")
 	
-	hfile.create_array(telGroup, 'tabRefShape', tabRefShape, "Reference pulse shape of the pixel of the telescope (channel, pixel, sample)")
-	hfile.create_array(telGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
+	hfile.create_array(camTelGroup, 'tabRefShape', tabRefShape, "Reference pulse shape of the pixel of the telescope (channel, pixel, sample)")
+	hfile.create_array(camTelGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
 	
 	image_shape = (nbSlice, nbPixel)
 	
@@ -506,8 +506,8 @@ def createFileStructure(hfile, telInfo_from_evt):
 	eventR1Group = hfile.create_group("/r1", 'event', 'Raw data waveform events')
 	
 	#The group in the r1 group will be completed on the fly with the informations collected in telInfo_from_evt
-	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
-		createTelGroupAndTable(hfile, telIndex, telId, telInfo)
+	for telId, telInfo in telInfo_from_evt.items():
+		createTelGroupAndTable(hfile, telId, telInfo)
 	
 	#Group : instrument
 	instrumentGroup = hfile.create_group("/", 'instrument', 'Instrument informations of the run')
@@ -551,7 +551,7 @@ def fillSimulationHeaderInfo(hfile, inputFileName):
 		inputFileName : name of the input file to be used
 	'''
 	source = event_source(inputFileName)
-	evt0 = next(iter(source))
+	evt = next(iter(source))
 	
 	tableSimulationConfig = hfile.root.simulation.run_config
 	tabSimConf = tableSimulationConfig.row
@@ -583,7 +583,7 @@ def fillSimulationHeaderInfo(hfile, inputFileName):
 	tabSimConf["min_scatter_range"] = np.float32(mcHeader.min_scatter_range)
 	tabSimConf["min_viewcone_radius"] = np.float32(mcHeader.min_viewcone_radius)
 	tabSimConf["num_showers"] = np.uint64(mcHeader.num_showers)
-	tabSimConf["obs_id"] = np.uint64(mcHeader.obs_id)
+	tabSimConf["obs_id"] = np.uint64(evt.r0.obs_id)
 	tabSimConf["prod_site_B_declination"] = np.float32(mcHeader.prod_site_B_declination)
 	tabSimConf["prod_site_B_inclination"] = np.float32(mcHeader.prod_site_B_inclination)
 	tabSimConf["prod_site_B_total"] = np.float32(mcHeader.prod_site_B_total)
@@ -607,7 +607,7 @@ def fillOpticDescription(hfile, telInfo_from_evt):
 		telInfo_from_evt : information of telescopes
 	'''
 	
-	tableOptic = hfile.root.instrument.subarray.optic
+	tableOptic = hfile.root.instrument.subarray.telescope.optics
 	tabOp = tableOptic.row
 	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
 		telType = telInfo[TELINFO_TELTYPE]
@@ -650,28 +650,29 @@ def appendCorsikaEvent(tableMcCorsikaEvent, event):
 		tableMcCorsikaEvent : table of Corsika events to be completed
 		event : Monte Carlo event to be used
 	'''
-	tableMcCorsikaEvent['event_id'] = np.uint64(event.r0.event_id)
-	tableMcCorsikaEvent['mc_az'] = np.float32(event.mc.az)
-	tableMcCorsikaEvent['mc_alt'] = np.float32(event.mc.alt)
+	tabMcEvent = tableMcCorsikaEvent.row
+	tabMcEvent['event_id'] = np.uint64(event.r0.event_id)
+	tabMcEvent['mc_az'] = np.float32(event.mc.az)
+	tabMcEvent['mc_alt'] = np.float32(event.mc.alt)
 	
-	tableMcCorsikaEvent['mc_core_x'] = np.float32(event.mc.core_x)
-	tableMcCorsikaEvent['mc_core_y'] = np.float32(event.mc.core_y)
+	tabMcEvent['mc_core_x'] = np.float32(event.mc.core_x)
+	tabMcEvent['mc_core_y'] = np.float32(event.mc.core_y)
 	
-	tableMcCorsikaEvent['mc_energy'] = np.float32(event.mc.energy)
-	tableMcCorsikaEvent['mc_h_first_int'] = np.float32(event.mc.h_first_int)
-	tableMcCorsikaEvent['mc_shower_primary_id'] = np.uint8(event.mc.shower_primary_id)
+	tabMcEvent['mc_energy'] = np.float32(event.mc.energy)
+	tabMcEvent['mc_h_first_int'] = np.float32(event.mc.h_first_int)
+	tabMcEvent['mc_shower_primary_id'] = np.uint8(event.mc.shower_primary_id)
 	
-	tableMcCorsikaEvent['mc_x_max'] = np.float32(event.mc.x_max)
+	tabMcEvent['mc_x_max'] = np.float32(event.mc.x_max)
 	
-	tableMcCorsikaEvent['obs_id'] = np.uint64(event.r0.obs_id)
+	tabMcEvent['obs_id'] = np.uint64(event.r0.obs_id)
 	
 	#I don't know where to find the following informations but they exist in C version
-	#tableMcCorsikaEvent['depthStart'] = np.float32(0.0)
-	#tableMcCorsikaEvent['hmax'] = np.float32(0.0)
-	#tableMcCorsikaEvent['emax'] = np.float32(0.0)
-	#tableMcCorsikaEvent['cmax'] = np.float32(0.0)
+	#tabMcEvent['depthStart'] = np.float32(0.0)
+	#tabMcEvent['hmax'] = np.float32(0.0)
+	#tabMcEvent['emax'] = np.float32(0.0)
+	#tabMcEvent['cmax'] = np.float32(0.0)
 	
-	tableMcCorsikaEvent.append()
+	tabMcEvent.append()
 
 
 def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, timeStamp):
