@@ -37,6 +37,7 @@ def getCameraTypeFromName(camName):
 	else:
 		return 7
 
+
 def getCameraNameFromType(camType):
 	'''
 	Get the name of the given camera by its type
@@ -777,10 +778,15 @@ def main():
 	inputFileName = args.input
 	nbTel = getNbTel(inputFileName)
 	print("Number of telescope : ",nbTel)
+	
+	tables.parameters.NODE_CACHE_SLOTS = max(tables.parameters.NODE_CACHE_SLOTS, 3*nbTel + 20)
+	
 	telInfo_from_evt = getTelescopeInfoFromEvent(inputFileName, nbTel)
 	
-	zstdFilter = tables.Filters(complevel=6, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
-	hfile = tables.open_file(args.output, mode = "w", filters=zstdFilter)
+	#zstdFilter = tables.Filters(complevel=6, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
+	hfile = tables.open_file(args.output, mode = "w"
+			  #, filters=zstdFilter
+			  )
 	
 	print('Create file structure')
 	tableMcCorsikaEvent = createFileStructure(hfile, telInfo_from_evt)
@@ -803,16 +809,20 @@ def main():
 	max_event = 10000000
 	if args.max_event != None:
 		max_event = int(args.max_event)
-
+	print("\n")
 	for event in source:
 		if isSimulationMode:
 			appendCorsikaEvent(tableMcCorsikaEvent, event)
 		appendEventTelescopeData(hfile, event)
 		nb_event+=1
-		print("{} / {}".format(nb_event, max_event), end="\r")
+		print("\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r{} / {}".format(nb_event, max_event), end="")
 		if nb_event >= max_event:
 			break
-	print('Done')
+	if isSimulationMode:
+		tableMcCorsikaEvent.flush()
+		
+	hfile.close()
+	print('\nDone')
 
 
 if __name__ == '__main__':
