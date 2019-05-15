@@ -737,7 +737,6 @@ def appendEventTelescopeData(hfile, event):
 	dicoTel = event.r0.tel
 	for telId in tabTelWithData:
 		waveform = dicoTel[telId].waveform
-		#print('waveform.shape:', waveform.shape)
 		telIndex = telId - 1
 		if telIndex < 0:
 			telIndex = 0
