@@ -324,6 +324,14 @@ def createCameraTable(hfile, parentGroup, tableName):
 class OpticDescription(tables.IsDescription):
 	'''
 	Describe the optic of the all the telescopes
+	Attributes:
+	-----------
+		description : description of the telescope optic (one mirror, two, etc)
+		name : name of the optic
+		type : type of the optic
+		mirror_area : area of the mirror in meters square
+		num_mirror_tiles : number of mirrors tiles
+		equivalent_focal_length : equivalent focal lenght of the mirror in meters
 	'''
 	description = tables.StringCol(14, dflt=b'')
 	name = tables.StringCol(5, dflt=b'')
