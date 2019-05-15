@@ -298,6 +298,11 @@ def fillSubarrayLayout(hfile, telInfo_from_evt):
 class CameraPixel(tables.IsDescription):
 	'''
 	Desctibes the pixels of a camera
+	Attributes:
+		pix_id : id of the pixel
+		pix_x : position of the pixel on x
+		pix_y : position of the pixel on y
+		pix_area : area of the pixel (in meter square)
 	'''
 	pix_id = tables.UInt64Col()
 	pix_x = tables.Float32Col()
