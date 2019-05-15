@@ -188,7 +188,7 @@ class RunConfigEvent(tables.IsDescription):
 		prod_site_B_inclination : magnetic inclination [rad]
 		prod_site_B_total : total geomagnetic field [uT]
 		prod_site_alt : height of observation level [m]
-		run_array_direction : direction of the run ?
+		run_array_direction : direction of the run (in azimuth and altitude in radian)
 		shower_prog_id : CORSIKA=1, ALTAI=2, KASCADE=3, MOCCA=4
 		shower_prog_start : Time when shower simulation started, CORSIKA: only date
 		shower_reuse : Number of used shower per event
@@ -226,7 +226,7 @@ class RunConfigEvent(tables.IsDescription):
 	prod_site_B_inclination = tables.Float32Col()
 	prod_site_B_total = tables.Float32Col()
 	prod_site_alt = tables.Float32Col()
-	run_array_direction = tables.Float32Col()
+	run_array_direction = tables.Float32Col(shape=2)
 	shower_prog_id = tables.UInt64Col()
 	shower_prog_start = tables.Int32Col()
 	shower_reuse = tables.UInt64Col()
@@ -640,46 +640,6 @@ def getNbTel(inputFileName):
 	evt0 = next(itSource)
 	nbTel = evt0.inst.subarray.num_tels
 	return nbTel
-
-
-def createRunHeader(hfile, source):
-	'''
-	Create the run header as a group in hdf5
-	------
-	Parameter :
-		hfile : hdf5 file to be used
-		source : source of a simtel file
-	'''
-	runHeaderGroup = hfile.create_group("/", 'RunHeader', 'Header of the run')
-	
-	nbTel = getNbTel(source)
-	#I take the first event, it may be useful
-	itSource = iter(source)
-	evt0 = next(itSource)
-	
-	#Find the appropriate values in simtel
-	posTelX = np.asarray(evt0.inst.subarray.tel_coords.x, dtype=np.float32)
-	posTelY = np.asarray(evt0.inst.subarray.tel_coords.y, dtype=np.float32)
-	posTelZ = np.asarray(evt0.inst.subarray.tel_coords.z, dtype=np.float32)
-
-	hfile.create_array(runHeaderGroup, 'tabPosTelX', posTelX, "Position of the telescope on the X axis in meters")
-	hfile.create_array(runHeaderGroup, 'tabPosTelY', posTelY, "Position of the telescope on the Y axis in meters")
-	hfile.create_array(runHeaderGroup, 'tabPosTelZ', posTelZ, "Position of the telescope on the Z axis in meters")
-
-	tabFocalTel = np.zeros(nbTel, dtype=np.float32)
-	dicoTelInfo = evt0.inst.subarray.tel
-	for telIndex in range(0, nbTel):
-		telInfo = dicoTelInfo[telIndex + 1]
-		tabFocalTel[telIndex] = np.float32(telInfo.optics.equivalent_focal_length.value)
-
-	hfile.create_array(runHeaderGroup, 'tabFocalTel', tabFocalTel, "Focal lenght of the telescope in meters")
-
-	
-	altitude = np.float32(evt0.mcheader.run_array_direction[1])
-	azimuth = np.float32(evt0.mcheader.run_array_direction[0])
-
-	hfile.create_array(runHeaderGroup, 'altitude', altitude, "Altitude angle observation of the telescope in radian")
-	hfile.create_array(runHeaderGroup, 'azimuth', azimuth, "Azimuth angle observation of the telescope in radian")
 
 
 def appendCorsikaEvent(tableMcCorsikaEvent, event):
