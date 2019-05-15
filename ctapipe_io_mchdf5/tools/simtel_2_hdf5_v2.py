@@ -655,6 +655,7 @@ def main():
 	print('Create file structure')
 	tableMcCorsikaEvent = createFileStructure(fileh, telInfo_from_evt)
 	
+	print('Fill the simulation header informations')
 	fillSimulationHeaderInfo(fileh, inputFileName)
 	
 	source = event_source(inputFileName)
