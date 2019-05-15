@@ -801,15 +801,14 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 		eventId : id of the corresponding event
 		timeStamp : time of the event in UTC
 	'''
-	#We transpose the waveform :
-	
-	
 	tabtrigger = telNode.trigger.row
 	tabtrigger['event_id'] = eventId
 	
 	#TODO : use the proper convertion from timeStamp to the time in second and nanosecond
-	tabtrigger['time_s'] = timeStamp
-	tabtrigger['time_qns'] = timeStamp
+	timeSecond = int(timeStamp)
+	timeMicroSec = timeStamp - timeSecond
+	tabtrigger['time_s'] = timeSecond
+	tabtrigger['time_qns'] = timeMicroSec
 	tabtrigger.append()
 	
 	tabWaveformHi = telNode.waveformHi.row
