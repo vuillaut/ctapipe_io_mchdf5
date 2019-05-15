@@ -706,7 +706,7 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 	
 	if photo_electron_image is not None:
 		tabPhotoElectronImage = telNode.photo_electron_image.row
-		tabPhotoElectronImage["photo_electron_image"] = np.asarray(photo_electron_image, dtype=np.float32))
+		tabPhotoElectronImage["photo_electron_image"] = np.asarray(photo_electron_image, dtype=np.float32)
 		tabPhotoElectronImage.append()
 	
 	
