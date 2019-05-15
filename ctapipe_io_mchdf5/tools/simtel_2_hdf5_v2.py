@@ -96,7 +96,8 @@ TELINFO_NBMIRROR = 8
 TELINFO_TELPOSX = 9
 TELINFO_TELPOSY = 10
 TELINFO_TELPOSZ = 11
-
+TELINFO_NBMIRRORTILES = 12
+TELINFO_MIRRORAREA = 13
 
 def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 	'''
@@ -136,15 +137,17 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 				tabPixelX = np.asarray(telInfo.camera.pix_x, dtype=np.float32)
 				tabPixelY = np.asarray(telInfo.camera.pix_y, dtype=np.float32)
 				
-				#TODO : get the proper number of mirrors
-				nbMirror = 0
+				nbMirror = np.uint64(telInfo.optics.num_mirrors)
+				nbMirrorTiles = np.uint64(telInfo.optics.num_mirror_tiles)
+				mirrorArea = np.uint64(telInfo.optics.mirror_area.value)
+				
 				
 				telX = posTelX[tel_id - 1]
 				telY = posTelY[tel_id - 1]
 				telZ = posTelZ[tel_id - 1]
 				
 				telescope_info[tel_id] = (ref_shape, nb_slice, ped, gain, telType, focalLen, tabPixelX, tabPixelY, nbMirror,
-								telX, telY, telZ)
+								telX, telY, telZ, nbMirrorTiles, mirrorArea)
 		if len(telescope_info) >= max_nb_tel:
 			return telescope_info
 	return telescope_info
