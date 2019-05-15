@@ -619,9 +619,9 @@ def fillOpticDescription(hfile, telInfo_from_evt):
 		tabOp["name"] = camName
 		tabOp["type"] = telTypeStr
 		tabOp["mirror_area"] = np.float32(telInfo[TELINFO_MIRRORAREA])
-		tabOp["num_mirrors"] = np.float32(telInfo[TELINFO_NBMIRROR]
-		tabOp["num_mirror_tiles"] = np.float32(telInfo[TELINFO_NBMIRRORTILES]
-		tabOp["equivalent_focal_length"] = np.float32(telInfo[TELINFO_FOCLEN]
+		tabOp["num_mirrors"] = np.float32(telInfo[TELINFO_NBMIRROR])
+		tabOp["num_mirror_tiles"] = np.float32(telInfo[TELINFO_NBMIRRORTILES])
+		tabOp["equivalent_focal_length"] = np.float32(telInfo[TELINFO_FOCLEN])
 		tabOp.append()
 
 
