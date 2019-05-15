@@ -337,6 +337,12 @@ class OpticDescription(tables.IsDescription):
 class TriggerInfo(tables.IsDescription):
 	'''
 	Describe the trigger informations of the telescopes events
+	Attributes:
+	-----------
+		event_id : id of the corresponding event
+		time_s : time of the event in second since 1st january 1970
+		time_qns : time in nanosecond (or picosecond) to complete the time in second
+		obs_id : id of the observation
 	'''
 	event_id = tables.UInt64Col()
 	time_s = tables.UInt32Col()
