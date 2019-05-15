@@ -746,12 +746,13 @@ def main():
 	print("Number of telescope : ",nbTel)
 	telInfo_from_evt = getTelescopeInfoFromEvent(inputFileName, nbTel)
 	
-	hfile = tables.open_file(args.output, mode = "w")
+	zstdFilter = tables.Filters(complevel=6, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
+	hfile = tables.open_file(args.output, mode = "w", filters=zstdFilter)
 	
 	print('Create file structure')
 	tableMcCorsikaEvent = createFileStructure(hfile, telInfo_from_evt)
 	
-	print('Fill the subarray layou informations')
+	print('Fill the subarray layout informations')
 	fillSubarrayLayout(hfile, telInfo_from_evt)
 	
 	print('Fill the optic description of the telescopes')
