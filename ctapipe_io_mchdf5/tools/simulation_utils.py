@@ -142,4 +142,108 @@ class MCEvent(tables.IsDescription):
 	obs_id = tables.UInt64Col()
 
 
+def createSimiulationDataset(hfile):
+	'''
+	Create the simulation dataset
+	Parameters:
+	-----------
+		hfile : HDF5 file to be used
+	Return:
+	-------
+		table of the mc_event
+	'''
+	simulationGroup = hfile.create_group("/", 'simulation', 'Simulation informations of the run')
+	hfile.create_table(simulationGroup, 'run_config', RunConfigEvent, "Configuration of the simulated events")
+	hfile.create_table(simulationGroup, 'thrown_event_distribution', ThrowEventDistribution, "Distribution of the simulated events")
+	tableMcEvent = hfile.create_table(simulationGroup, 'mc_event', MCEvent, "All simulated Corsika events")
+	return tableMcEvent
+
+
+def fillSimulationHeaderInfo(hfile, inputFileName):
+	'''
+	Fill the simulation informations in the simulation header (/simulation/run_config)
+	Parameters:
+	-----------
+		hfile : HDF5 file to be used
+		inputFileName : name of the input file to be used
+	'''
+	source = event_source(inputFileName)
+	evt = next(iter(source))
+	
+	tableSimulationConfig = hfile.root.simulation.run_config
+	tabSimConf = tableSimulationConfig.row
+	
+	mcHeader = evt.mcheader
+	tabSimConf["atmosphere"] = np.uint64(mcHeader.atmosphere)
+	tabSimConf["core_pos_mode"] = np.uint64(mcHeader.core_pos_mode)
+	tabSimConf["corsika_bunchsize"] = np.float32(mcHeader.corsika_bunchsize)
+	tabSimConf["corsika_high_E_detail"] = np.int32(mcHeader.corsika_high_E_detail)
+	tabSimConf["corsika_high_E_model"] = np.int32(mcHeader.corsika_high_E_model)
+	tabSimConf["corsika_iact_options"] = np.int32(mcHeader.corsika_iact_options)
+	tabSimConf["corsika_low_E_detail"] = np.int32(mcHeader.corsika_low_E_detail)
+	tabSimConf["corsika_low_E_model"] = np.int32(mcHeader.corsika_low_E_model)
+	tabSimConf["corsika_version"] = np.int32(mcHeader.corsika_version)
+	tabSimConf["corsika_wlen_max"] = np.float32(mcHeader.corsika_wlen_max)
+	tabSimConf["corsika_wlen_min"] = np.float32(mcHeader.corsika_wlen_min)
+	tabSimConf["detector_prog_id"] = np.uint64(mcHeader.detector_prog_id)
+	tabSimConf["detector_prog_start"] = np.int32(mcHeader.detector_prog_start)
+	tabSimConf["diffuse"] = np.int32(mcHeader.diffuse)
+	tabSimConf["energy_range_max"] = np.float32(mcHeader.energy_range_max)
+	tabSimConf["energy_range_min"] = np.float32(mcHeader.energy_range_min)
+	tabSimConf["injection_height"] = np.float32(mcHeader.injection_height)
+	tabSimConf["max_alt"] = np.float32(mcHeader.max_alt)
+	tabSimConf["max_az"] = np.float32(mcHeader.max_az)
+	tabSimConf["max_scatter_range"] = np.float32(mcHeader.max_scatter_range)
+	tabSimConf["max_viewcone_radius"] = np.float32(mcHeader.max_viewcone_radius)
+	tabSimConf["min_alt"] = np.float32(mcHeader.min_alt)
+	tabSimConf["min_az"] = np.float32(mcHeader.min_az)
+	tabSimConf["min_scatter_range"] = np.float32(mcHeader.min_scatter_range)
+	tabSimConf["min_viewcone_radius"] = np.float32(mcHeader.min_viewcone_radius)
+	tabSimConf["num_showers"] = np.uint64(mcHeader.num_showers)
+	tabSimConf["obs_id"] = np.uint64(evt.r0.obs_id)
+	tabSimConf["prod_site_B_declination"] = np.float32(mcHeader.prod_site_B_declination)
+	tabSimConf["prod_site_B_inclination"] = np.float32(mcHeader.prod_site_B_inclination)
+	tabSimConf["prod_site_B_total"] = np.float32(mcHeader.prod_site_B_total)
+	tabSimConf["prod_site_alt"] = np.float32(mcHeader.prod_site_alt)
+	tabSimConf["run_array_direction"] = np.float32(mcHeader.run_array_direction)
+	tabSimConf["shower_prog_id"] = np.uint64(mcHeader.shower_prog_id)
+	tabSimConf["shower_prog_start"] = np.int32(mcHeader.shower_prog_start)
+	tabSimConf["shower_reuse"] = np.uint64(mcHeader.shower_reuse)
+	tabSimConf["simtel_version"] = np.int32(mcHeader.simtel_version)
+	tabSimConf["spectral_index"] = np.float32(mcHeader.spectral_index)
+	tabSimConf.append()
+
+
+def appendCorsikaEvent(tableMcCorsikaEvent, event):
+	'''
+	Append the Monte Carlo informations in the table of Corsika events
+	------
+	Parameter :
+		tableMcCorsikaEvent : table of Corsika events to be completed
+		event : Monte Carlo event to be used
+	'''
+	tabMcEvent = tableMcCorsikaEvent.row
+	tabMcEvent['event_id'] = np.uint64(event.r0.event_id)
+	tabMcEvent['mc_az'] = np.float32(event.mc.az)
+	tabMcEvent['mc_alt'] = np.float32(event.mc.alt)
+	
+	tabMcEvent['mc_core_x'] = np.float32(event.mc.core_x)
+	tabMcEvent['mc_core_y'] = np.float32(event.mc.core_y)
+	
+	tabMcEvent['mc_energy'] = np.float32(event.mc.energy)
+	tabMcEvent['mc_h_first_int'] = np.float32(event.mc.h_first_int)
+	tabMcEvent['mc_shower_primary_id'] = np.uint8(event.mc.shower_primary_id)
+	
+	tabMcEvent['mc_x_max'] = np.float32(event.mc.x_max)
+	
+	tabMcEvent['obs_id'] = np.uint64(event.r0.obs_id)
+	
+	#I don't know where to find the following informations but they exist in C version
+	#tabMcEvent['depthStart'] = np.float32(0.0)
+	#tabMcEvent['hmax'] = np.float32(0.0)
+	#tabMcEvent['emax'] = np.float32(0.0)
+	#tabMcEvent['cmax'] = np.float32(0.0)
+	
+	tabMcEvent.append()
+
 
