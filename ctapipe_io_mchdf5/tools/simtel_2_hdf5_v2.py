@@ -156,6 +156,44 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 class RunConfigEvent(tables.IsDescription):
 	'''
 	Configuration of the simulated events
+	Attributes:
+		atmosphere : Atmospheric model number
+		core_pos_mode : Core Position Mode (fixed/circular/...)
+		corsika_bunchsize : Number of photons per bunch
+		corsika_high_E_detail : Detector MC information
+		corsika_high_E_model : Detector MC information
+		corsika_iact_options : Detector MC information
+		corsika_low_E_detail : Detector MC information
+		corsika_low_E_model : Detector MC information
+		corsika_version : CORSIKA version * 1000
+		corsika_wlen_max : Maximum wavelength of cherenkov light [nm]
+		corsika_wlen_min : Minimum wavelength of cherenkov light [nm]
+		detector_prog_id : simtelarray=1
+		detector_prog_start : Time when detector simulation started
+		diffuse : True if the events are diffuse, False is they are point like
+		energy_range_max : Upper limit of energy range of primary particle [TeV]
+		energy_range_min : Lower limit of energy range of primary particle [TeV]
+		injection_height : Height of particle injection [m]
+		max_alt : Maximum altitude of the simulated showers in radian
+		max_az : Maximum azimuth of the simulated showers in radian
+		max_scatter_range : Maximum scatter range [m]
+		max_viewcone_radius : Maximum viewcone radius [deg]
+		min_alt : Minimum altitude of the simulated showers in radian
+		min_az : Minimum azimuth of the simulated showers in radian
+		min_scatter_range : Maximum scatter range [m]
+		min_viewcone_radius : Minimum viewcone radius [deg]
+		num_showers : total number of shower
+		obs_id : id of the observation
+		prod_site_B_declination : magnetic declination [rad]
+		prod_site_B_inclination : magnetic inclination [rad]
+		prod_site_B_total : total geomagnetic field [uT]
+		prod_site_alt : height of observation level [m]
+		run_array_direction : direction of the run ?
+		shower_prog_id : CORSIKA=1, ALTAI=2, KASCADE=3, MOCCA=4
+		shower_prog_start : Time when shower simulation started, CORSIKA: only date
+		shower_reuse : Number of used shower per event
+		simtel_version : sim_telarray version * 1000
+		spectral_index : Power-law spectral index of spectrum
 	'''
 	atmosphere = tables.UInt64Col()
 	core_pos_mode = tables.UInt64Col()
@@ -559,7 +597,33 @@ def fillSimulationHeaderInfo(hfile, inputFileName):
 	tabSimConf["spectral_index"] = np.float32(0.0)
 	
 	tabSimConf.append()
+
+
+def fillOpticDescription(hfile, telInfo_from_evt):
+	'''
+	Fill the optic description table
+	Parameters:
+	-----------
+		hfile : HDF5 file to be used
+		telInfo_from_evt : information of telescopes
+	'''
 	
+	tableOptic = hfile.root.instrument.subarray.optic
+	tabOp = tableOptic.row
+	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
+		telType = telInfo[TELINFO_TELTYPE]
+		
+		camName = getCameraNameFromType(telType)
+		telTypeStr = getTelescopeTypeStrFromCameraType(telType)
+		
+		tabOp["description"] = "Description"
+		tabOp["name"] = camName
+		tabOp["type"] = telTypeStr
+		tabOp["mirror_area"] = np.float32(telInfo[TELINFO_MIRRORAREA])
+		tabOp["num_mirrors"] = np.float32(telInfo[TELINFO_NBMIRROR]
+		tabOp["num_mirror_tiles"] = np.float32(telInfo[TELINFO_NBMIRRORTILES]
+		tabOp["equivalent_focal_length"] = np.float32(telInfo[TELINFO_FOCLEN]
+		tabOp.append()
 
 
 def getNbTel(inputFileName):
@@ -808,8 +872,12 @@ def main():
 	print('Fill the subarray layou informations')
 	fillSubarrayLayout(hfile, telInfo_from_evt)
 	
+	print('Fill the optic description of the telescopes')
+	fillOpticDescription(hfile, telInfo_from_evt)
+	
 	print('Fill the simulation header informations')
 	fillSimulationHeaderInfo(hfile, inputFileName)
+	
 	
 	
 	
