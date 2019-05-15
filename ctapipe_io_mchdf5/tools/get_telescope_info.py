@@ -1,4 +1,6 @@
 
+import numpy as np
+
 TELINFO_REFSHAPE = 0
 TELINFO_NBSLICE = 1
 TELINFO_PEDESTAL = 2

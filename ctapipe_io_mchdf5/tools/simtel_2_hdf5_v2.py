@@ -12,113 +12,7 @@ from .camera_tel_type import getCameraTypeFromName, getCameraNameFromType, getTe
 from .get_telescope_info import *
 from .simulation_utils import *
 from .get_nb_tel import getNbTel
-
-class SubarrayLayout(tables.IsDescription):
-	'''
-	Layout of the subarray
-	Attributes:
-		tel_id : id of the telescope
-		pos_x : position of the telescope on the X axix (in meters to the north)
-		pos_y : position of the telescope on the Y axix (in meters to the west)
-		pos_z : high of the telescope in meters
-		name : name of the telescope
-		type : type of the telescope
-		type_id : type of the telscope in unsigned long (to speed up the access for specific analysis)
-		num_mirrors : number of mirror of the telescope
-		camera_type : type of the telescope camera
-		tel_description : description of the telescope
-	'''
-	tel_id = tables.UInt64Col()
-	pos_x = tables.Float32Col()
-	pos_y = tables.Float32Col()
-	pos_z = tables.Float32Col()
-	name = tables.StringCol(5, dflt=b'')
-	type = tables.StringCol(3, dflt=b'')
-	type_id = tables.UInt64Col()
-	num_mirrors = tables.UInt64Col()
-	camera_type = tables.StringCol(9, dflt=b'')
-	tel_description = tables.StringCol(14, dflt=b'')
-
-
-def fillSubarrayLayout(hfile, telInfo_from_evt):
-	'''
-	Fill the subarray informations
-	Parameters:
-	-----------
-		hfile : HDF5 file to be used
-		telInfo_from_evt : information of telescopes
-	'''
-	tableSubarrayLayout = hfile.root.instrument.subarray.layout
-	tabSubLayout = tableSubarrayLayout.row
-	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
-		telType = telInfo[TELINFO_TELTYPE]
-		camName = getCameraNameFromType(telType)
-		telTypeStr = getTelescopeTypeStrFromCameraType(telType)
-		
-		tabSubLayout["tel_id"] = np.uint64(telId)
-		tabSubLayout["pos_x"] = np.float32(telInfo[TELINFO_TELPOSX])
-		tabSubLayout["pos_y"] = np.float32(telInfo[TELINFO_TELPOSY])
-		tabSubLayout["pos_z"] = np.float32(telInfo[TELINFO_TELPOSZ])
-		tabSubLayout["name"] = camName
-		tabSubLayout["type"] = telTypeStr
-		tabSubLayout["type_id"] = np.uint64(telType)
-		
-		tabSubLayout["num_mirrors"] = np.uint64(telInfo[TELINFO_NBMIRROR])
-		tabSubLayout["camera_type"] = camName + "Cam"
-		tabSubLayout["tel_description"] = "Description"
-		
-
-
-class CameraPixel(tables.IsDescription):
-	'''
-	Desctibes the pixels of a camera
-	Attributes:
-		pix_id : id of the pixel
-		pix_x : position of the pixel on x
-		pix_y : position of the pixel on y
-		pix_area : area of the pixel (in meter square)
-	'''
-	pix_id = tables.UInt64Col()
-	pix_x = tables.Float32Col()
-	pix_y = tables.Float32Col()
-	pix_area = tables.Float32Col()
-
-
-def createCameraTable(hfile, parentGroup, tableName):
-	'''
-	Create a table to describe a camera
-	Parameters:
-	-----------
-		hfile : HDF5 file to be used
-		parentGroup : parent group of the table to be created
-		tableName : name of the table to be created
-	Return:
-	-------
-		created table
-	'''
-	table = hfile.create_table(parentGroup, tableName, ThrowEventDistribution, "Distribution of the "+tableName+" camera")
-	return table
-
-
-class OpticDescription(tables.IsDescription):
-	'''
-	Describe the optic of the all the telescopes
-	Attributes:
-	-----------
-		description : description of the telescope optic (one mirror, two, etc)
-		name : name of the optic
-		type : type of the optic
-		mirror_area : area of the mirror in meters square
-		num_mirror_tiles : number of mirrors tiles
-		equivalent_focal_length : equivalent focal lenght of the mirror in meters
-	'''
-	description = tables.StringCol(14, dflt=b'')
-	name = tables.StringCol(5, dflt=b'')
-	type = tables.StringCol(3, dflt=b'')
-	mirror_area = tables.Float32Col()
-	num_mirrors = tables.UInt64Col()
-	num_mirror_tiles = tables.UInt64Col()
-	equivalent_focal_length = tables.Float32Col(shape=(), dflt=0.0, pos=6)
+from .instrument_utils import *
 
 
 class TriggerInfo(tables.IsDescription):
@@ -148,9 +42,7 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 		telInfo : table of some informations related to the telescope
 	'''
 	telIndex = telId - 1
-	if telIndex < 0:
-		telIndex = 0
-	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telIndex), 'Data of telescopes '+str(telIndex))
+	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telId), 'Data of telescopes '+str(telId))
 	
 	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events")
 	
@@ -236,25 +128,8 @@ def createFileStructure(hfile, telInfo_from_evt):
 	for telId, telInfo in telInfo_from_evt.items():
 		createTelGroupAndTable(hfile, telId, telInfo)
 	
-	#Group : instrument
-	instrumentGroup = hfile.create_group("/", 'instrument', 'Instrument informations of the run')
-	#	Group : instrument/subarray
-	subarrayGroup = hfile.create_group("/instrument", 'subarray', 'Subarray of the run')
-	tableSubarrayLayout = hfile.create_table(subarrayGroup, 'layout', SubarrayLayout, "Layout of the subarray")
-	#		Group : instrument/subarray/telescope
-	subarrayTelescopeGroup = hfile.create_group("/instrument/subarray", 'telescope', 'Telescope of the subarray')
 	
-	#			Group : instrument/subarray/telescope/camera
-	camTelSubInstGroup = hfile.create_group("/instrument/subarray/telescope", 'camera', 'Camera in the run')
-	tableLstCam = createCameraTable(hfile, camTelSubInstGroup, "LSTCam")
-	tableNectarCam = createCameraTable(hfile, camTelSubInstGroup, "NectarCam")
-	tableFlashCam = createCameraTable(hfile, camTelSubInstGroup, "FlashCam")
-	tableSCTCam = createCameraTable(hfile, camTelSubInstGroup, "SCTCam")
-	tableAstriCam = createCameraTable(hfile, camTelSubInstGroup, "AstriCam")
-	tableDcCam = createCameraTable(hfile, camTelSubInstGroup, "DCCam")
-	tableGctCam = createCameraTable(hfile, camTelSubInstGroup, "GCTCam")
-	
-	tableOptic = hfile.create_table(subarrayTelescopeGroup, 'optics', OpticDescription, "Describe the optic of the all the telescopes")
+	createInstrumentDataset(hfile, telInfo_from_evt)
 	
 	tableMcEvent = createSimiulationDataset(hfile)
 	return tableMcEvent
@@ -338,10 +213,7 @@ def appendEventTelescopeData(hfile, event):
 	dicoTel = event.r0.tel
 	for telId in tabTelWithData:
 		waveform = dicoTel[telId].waveform
-		telIndex = telId - 1
-		if telIndex < 0:
-			telIndex = 0
-		telNode = hfile.get_node("/r1", 'Tel_' + str(telIndex))
+		telNode = hfile.get_node("/r1", 'Tel_' + str(telId))
 		photo_electron_image = event.mc.tel[telId].photo_electron_image
 		appendWaveformInTelescope(telNode, waveform, photo_electron_image, event.r0.event_id, event.trig.gps_time.value)
 		

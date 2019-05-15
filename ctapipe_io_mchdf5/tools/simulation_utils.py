@@ -1,4 +1,7 @@
 
+import tables
+import numpy as np
+
 class RunConfigEvent(tables.IsDescription):
 	'''
 	Configuration of the simulated events
