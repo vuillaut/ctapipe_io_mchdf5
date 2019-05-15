@@ -196,6 +196,12 @@ class RunConfigEvent(tables.IsDescription):
 class ThrowEventDistribution(tables.IsDescription):
 	'''
 	Distribution of the simulated events
+	Attributes:
+		bins_core_dist : distribution of the impact parameters by respect to the dstance by the center of the site
+		bins_energy : distribution of the energy of the simulated events
+		hist_id : id of the histogram
+		num_entries : number of entries of the histogram
+		obs_id : observation id
 	'''
 	bins_core_dist = tables.Float32Col(shape=(201,))
 	bins_energy = tables.Float32Col(shape=(121,))
@@ -253,6 +259,17 @@ class MCEvent(tables.IsDescription):
 class SubarrayLayout(tables.IsDescription):
 	'''
 	Layout of the subarray
+	Attributes:
+		tel_id : id of the telescope
+		pos_x : position of the telescope on the X axix (in meters to the north)
+		pos_y : position of the telescope on the Y axix (in meters to the west)
+		pos_z : high of the telescope in meters
+		name : name of the telescope
+		type : type of the telescope
+		type_id : type of the telscope in unsigned long (to speed up the access for specific analysis)
+		num_mirrors : number of mirror of the telescope
+		camera_type : type of the telescope camera
+		tel_description : description of the telescope
 	'''
 	tel_id = tables.UInt64Col()
 	pos_x = tables.Float32Col()
