@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import tables
+import numbers
 import numpy as np
 from tables import open_file
 from ctapipe.io import event_source
@@ -98,6 +99,8 @@ TELINFO_TELPOSY = 10
 TELINFO_TELPOSZ = 11
 TELINFO_NBMIRRORTILES = 12
 TELINFO_MIRRORAREA = 13
+TELINFO_NBGAIN = 14
+TELINFO_NBPIXEL = 15
 
 def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 	'''
@@ -127,6 +130,8 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 			if not tel_id in telescope_info:
 				ref_shape = evt.mc.tel[tel_id].reference_pulse_shape
 				nb_slice = evt.r0.tel[tel_id].waveform.shape[2]
+				nbGain = evt.r0.tel[tel_id].waveform.shape[0]
+				nbPixel = evt.r0.tel[tel_id].waveform.shape[1]
 				ped = evt.mc.tel[tel_id].pedestal
 				gain =  evt.mc.tel[tel_id].dc_to_pe
 				
@@ -141,13 +146,12 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 				nbMirrorTiles = np.uint64(telInfo.optics.num_mirror_tiles)
 				mirrorArea = np.uint64(telInfo.optics.mirror_area.value)
 				
-				
 				telX = posTelX[tel_id - 1]
 				telY = posTelY[tel_id - 1]
 				telZ = posTelZ[tel_id - 1]
 				
 				telescope_info[tel_id] = (ref_shape, nb_slice, ped, gain, telType, focalLen, tabPixelX, tabPixelY, nbMirror,
-								telX, telY, telZ, nbMirrorTiles, mirrorArea)
+								telX, telY, telZ, nbMirrorTiles, mirrorArea, nbGain, nbPixel)
 		if len(telescope_info) >= max_nb_tel:
 			return telescope_info
 	return telescope_info
@@ -432,20 +436,24 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 		telInfo : table of some informations related to the telescope
 	'''
 	telIndex = telId - 1
+	if telIndex < 0:
+		telIndex = 0
 	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telIndex), 'Data of telescopes '+str(telIndex))
 	
 	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events")
 	
 	telType = np.uint64(telInfo[TELINFO_TELTYPE])
-	tabRefShape = np.asarray(telInfo[TELINFO_REFSHAPE], dtype=np.float32)
-	nbSample = np.uint64(tabRefShape.shape[1])
-	nbGain = np.uint64(tabRefShape.shape[0])
+	
+	nbGain = np.uint64(telInfo[TELINFO_NBGAIN])
 	nbSlice = np.uint64(telInfo[TELINFO_NBSLICE])
 	
-	tabGain = np.asarray(telInfo[TELINFO_GAIN])
-	tabPed = np.asarray(telInfo[TELINFO_PEDESTAL])
+	infoTabGain = telInfo[TELINFO_GAIN]
+	tabGain = np.asarray(infoTabGain, dtype=np.float32)
 	
-	nbPixel = np.uint64(tabPed.shape[-1])
+	infoTabPed = telInfo[TELINFO_PEDESTAL]
+	tabPed = np.asarray(infoTabPed, dtype=np.float32)
+	
+	nbPixel = np.uint64(telInfo[TELINFO_NBPIXEL])
 	
 	hfile.create_array(camTelGroup, 'nbPixel', nbPixel, "Number of pixels of the telescope")
 	hfile.create_array(camTelGroup, 'nbSlice', nbSlice, "Number of slices of the telescope")
@@ -455,8 +463,14 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 	hfile.create_array(camTelGroup, 'telType', telType, "Type of the telescope (0 : LST, 1 : NECTAR, 2 : FLASH, 3 : SCT, 4 : ASTRI, 5 : DC, 6 : GCT)")
 	hfile.create_array(camTelGroup, 'telId', telId, "Id of the telescope")
 	
-	hfile.create_array(camTelGroup, 'tabRefShape', tabRefShape, "Reference pulse shape of the pixel of the telescope (channel, pixel, sample)")
-	hfile.create_array(camTelGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
+	infoRefShape = telInfo[TELINFO_REFSHAPE]
+	tabRefShape = np.asarray(infoRefShape, dtype=np.float32)
+	if infoRefShape is not None:
+		nbSample = np.uint64(tabRefShape.shape[1])
+		hfile.create_array(camTelGroup, 'tabRefShape', tabRefShape, "Reference pulse shape of the pixel of the telescope (channel, pixel, sample)")
+	
+	if infoTabGain is not None:
+		hfile.create_array(camTelGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
 	
 	image_shape = (nbSlice, nbPixel)
 	
@@ -483,11 +497,12 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 	description_pedestal = type('description columns_dict_pedestal', (tables.IsDescription,), columns_dict_pedestal)
 	tablePedestal = hfile.create_table(camTelGroup, 'pedestal', description_pedestal, "Table of the pedestal for high and low gain")
 	
-	tabPedForEntry = tablePedestal.row
-	tabPedForEntry["first_event_id"] = np.uint64(0)
-	tabPedForEntry["last_event_id"] = np.uint64(-1)
-	tabPedForEntry["pedestal"] = tabPed
-	tabPedForEntry.append()
+	if infoTabPed is not None:
+		tabPedForEntry = tablePedestal.row
+		tabPedForEntry["first_event_id"] = np.uint64(0)
+		tabPedForEntry["last_event_id"] = np.uint64(-1)
+		tabPedForEntry["pedestal"] = tabPed
+		tabPedForEntry.append()
 
 
 def createFileStructure(hfile, telInfo_from_evt):
@@ -535,11 +550,6 @@ def createFileStructure(hfile, telInfo_from_evt):
 	tableThrowEventDistribution = hfile.create_table(simulationGroup, 'thrown_event_distribution', ThrowEventDistribution, "Distribution of the simulated events")
 	tableMcEvent = hfile.create_table(simulationGroup, 'mc_event', MCEvent, "All simulated Corsika events")
 	return tableMcEvent
-
-
-
-
-
 
 
 def fillSimulationHeaderInfo(hfile, inputFileName):
@@ -690,10 +700,11 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 	tabtrigger['event_id'] = eventId
 	
 	#TODO : use the proper convertion from timeStamp to the time in second and nanosecond
-	timeSecond = int(timeStamp)
-	timeMicroSec = timeStamp - timeSecond
-	tabtrigger['time_s'] = timeSecond
-	tabtrigger['time_qns'] = timeMicroSec
+	if isinstance(timeStamp, numbers.Number):
+		timeSecond = int(timeStamp)
+		timeMicroSec = timeStamp - timeSecond
+		tabtrigger['time_s'] = timeSecond
+		tabtrigger['time_qns'] = timeMicroSec
 	tabtrigger.append()
 	
 	tabWaveformHi = telNode.waveformHi.row
@@ -705,7 +716,7 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 		tabWaveformLo['waveformLo'] = np.swapaxes(waveform[1], 0, 1)
 		tabWaveformLo.append()
 	
-	if photo_electron_image is not None:
+	if photo_electron_image is not None and isinstance(photo_electron_image, list):
 		tabPhotoElectronImage = telNode.photo_electron_image.row
 		tabPhotoElectronImage["photo_electron_image"] = np.asarray(photo_electron_image, dtype=np.float32)
 		tabPhotoElectronImage.append()
@@ -731,6 +742,25 @@ def appendEventTelescopeData(hfile, event):
 		appendWaveformInTelescope(telNode, waveform, photo_electron_image, event.r0.event_id, event.trig.gps_time.value)
 		
 
+
+def checkIsSimulationFile(telInfo_from_evt):
+	'''
+	Function which check if the file is a simulation one or not
+	For now there is no origin in the ctapipe_io_lst plugin so I use this function to get the origin of the file
+	Parameters:
+	-----------
+		telInfo_from_evt : information of the different telescopes
+	Return:
+	-------
+		True if the data seems to provide of a simulation, False if not
+	'''
+	for key, value in telInfo_from_evt.items():
+		if value[TELINFO_REFSHAPE] is None:
+			return False
+		else:
+			return True
+
+
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-i', '--input', help="simtel r1 input file",
@@ -755,11 +785,14 @@ def main():
 	print('Fill the subarray layout informations')
 	fillSubarrayLayout(hfile, telInfo_from_evt)
 	
-	print('Fill the optic description of the telescopes')
-	fillOpticDescription(hfile, telInfo_from_evt)
+	isSimulationMode = checkIsSimulationFile(telInfo_from_evt)
 	
-	print('Fill the simulation header informations')
-	fillSimulationHeaderInfo(hfile, inputFileName)
+	if isSimulationMode:
+		print('Fill the optic description of the telescopes')
+		fillOpticDescription(hfile, telInfo_from_evt)
+		
+		print('Fill the simulation header informations')
+		fillSimulationHeaderInfo(hfile, inputFileName)
 	
 	source = event_source(inputFileName)
 	
@@ -769,7 +802,8 @@ def main():
 		max_event = int(args.max_event)
 
 	for event in source:
-		appendCorsikaEvent(tableMcCorsikaEvent, event)
+		if isSimulationMode:
+			appendCorsikaEvent(tableMcCorsikaEvent, event)
 		appendEventTelescopeData(hfile, event)
 		nb_event+=1
 		print("{} / {}".format(nb_event, max_event), end="\r")
