@@ -129,7 +129,31 @@ def createInstrumentDataset(hfile, telInfo_from_evt):
 	hfile.create_table(subarrayTelescopeGroup, 'optics', OpticDescription, "Describe the optic of the all the telescopes")
 
 
-
+def fillOpticDescription(hfile, telInfo_from_evt):
+	'''
+	Fill the optic description table
+	Parameters:
+	-----------
+		hfile : HDF5 file to be used
+		telInfo_from_evt : information of telescopes
+	'''
+	
+	tableOptic = hfile.root.instrument.subarray.telescope.optics
+	tabOp = tableOptic.row
+	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
+		telType = telInfo[TELINFO_TELTYPE]
+		
+		camName = getCameraNameFromType(telType)
+		telTypeStr = getTelescopeTypeStrFromCameraType(telType)
+		
+		tabOp["description"] = "Description"
+		tabOp["name"] = camName
+		tabOp["type"] = telTypeStr
+		tabOp["mirror_area"] = np.float32(telInfo[TELINFO_MIRRORAREA])
+		tabOp["num_mirrors"] = np.float32(telInfo[TELINFO_NBMIRROR])
+		tabOp["num_mirror_tiles"] = np.float32(telInfo[TELINFO_NBMIRRORTILES])
+		tabOp["equivalent_focal_length"] = np.float32(telInfo[TELINFO_FOCLEN])
+		tabOp.append()
 
 
 

@@ -73,3 +73,19 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 	return telescope_info
 
 
+def checkIsSimulationFile(telInfo_from_evt):
+	'''
+	Function which check if the file is a simulation one or not
+	For now there is no origin in the ctapipe_io_lst plugin so I use this function to get the origin of the file
+	Parameters:
+	-----------
+		telInfo_from_evt : information of the different telescopes
+	Return:
+	-------
+		True if the data seems to provide of a simulation, False if not
+	'''
+	for key, value in telInfo_from_evt.items():
+		if value[TELINFO_REFSHAPE] is None:
+			return False
+		else:
+			return True
