@@ -737,7 +737,10 @@ def appendEventTelescopeData(hfile, event):
 	for telId in tabTelWithData:
 		waveform = dicoTel[telId].waveform
 		#print('waveform.shape:', waveform.shape)
-		telNode = hfile.get_node("/r1", 'Tel_' + str(telId - 1))
+		telIndex = telId - 1
+		if telIndex < 0:
+			telIndex = 0
+		telNode = hfile.get_node("/r1", 'Tel_' + str(telIndex))
 		photo_electron_image = event.mc.tel[telId].photo_electron_image
 		appendWaveformInTelescope(telNode, waveform, photo_electron_image, event.r0.event_id, event.trig.gps_time.value)
 		
