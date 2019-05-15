@@ -356,6 +356,64 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 	return telescope_info
 
 
+def fillSimulationHeaderInfo(hfile, inputFileName):
+	'''
+	Fill the simulation informations in the simulation header (/simulation/run_config)
+	Parameters:
+	-----------
+		hfile : HDF5 file to be used
+		inputFileName : name of the input file to be used
+	'''
+	source = event_source(inputFileName)
+	evt0 = next(iter(source))
+	
+	tableSimulationConfig = hfile.root.simulation.run_config
+	tabSimConf = tableSimulationConfig.row
+	
+	#TODO : fill the simulation header informations with the proper values
+	
+	tabSimConf["atmosphere"] = np.uint64(0)
+	tabSimConf["core_pos_mode"] = np.uint64(0)
+	tabSimConf["corsika_bunchsize"] = np.float32(0.0)
+	tabSimConf["corsika_high_E_detail"] = np.int32(0)
+	tabSimConf["corsika_high_E_model"] = np.int32(0)
+	tabSimConf["corsika_iact_options"] = np.int32(0)
+	tabSimConf["corsika_low_E_detail"] = np.int32(0)
+	tabSimConf["corsika_low_E_model"] = np.int32(0)
+	tabSimConf["corsika_version"] = np.int32(0)
+	tabSimConf["corsika_wlen_max"] = np.float32(0.0)
+	tabSimConf["corsika_wlen_min"] = np.float32(0.0)
+	tabSimConf["detector_prog_id"] = np.uint64(0)
+	tabSimConf["detector_prog_start"] = np.int32(0)
+	tabSimConf["diffuse"] = np.int32(0)
+	tabSimConf["energy_range_max"] = np.float32(0.0)
+	tabSimConf["energy_range_min"] = np.float32(0.0)
+	tabSimConf["injection_height"] = np.float32(0.0)
+	tabSimConf["max_alt"] = np.float32(0.0)
+	tabSimConf["max_az"] = np.float32(0.0)
+	tabSimConf["max_scatter_range"] = np.float32(0.0)
+	tabSimConf["max_viewcone_radius"] = np.float32(0.0)
+	tabSimConf["min_alt"] = np.float32(0.0)
+	tabSimConf["min_az"] = np.float32(0.0)
+	tabSimConf["min_scatter_range"] = np.float32(0.0)
+	tabSimConf["min_viewcone_radius"] = np.float32(0.0)
+	tabSimConf["num_showers"] = np.uint64(0)
+	tabSimConf["obs_id"] = np.uint64(0)
+	tabSimConf["prod_site_B_declination"] = np.float32(0.0)
+	tabSimConf["prod_site_B_inclination"] = np.float32(0.0)
+	tabSimConf["prod_site_B_total"] = np.float32(0.0)
+	tabSimConf["prod_site_alt"] = np.float32(0.0)
+	tabSimConf["run_array_direction"] = np.float32(0.0)
+	tabSimConf["shower_prog_id"] = np.uint64(0)
+	tabSimConf["shower_prog_start"] = np.int32(0)
+	tabSimConf["shower_reuse"] = np.uint64(0)
+	tabSimConf["simtel_version"] = np.int32(0)
+	tabSimConf["spectral_index"] = np.float32(0.0)
+	
+	tabSimConf.append()
+	
+
+
 def getNbTel(inputFileName):
 	'''
 	Get the number of telescope in the simulation file
@@ -411,109 +469,6 @@ def createRunHeader(fileh, source):
 
 	fileh.create_array(runHeaderGroup, 'altitude', altitude, "Altitude angle observation of the telescope in radian")
 	fileh.create_array(runHeaderGroup, 'azimuth', azimuth, "Azimuth angle observation of the telescope in radian")
-
-
-class MCCorsikaEvent(tables.IsDescription):
-	"""Describe row format for event table.
-
-	Contains event-level information, mostly from Monte Carlo simulation
-	parameters. NOTE: Additional columns are added dynamically to some tables,
-	see the github wiki page for the full table/data format descriptions.
-
-	Attributes
-	----------
-	eventId : tables.UInt64Col
-		Shower event id.
-	obsId : tables.UInt64Col
-		Shower observation (run) id. Replaces old "run_id" in ctapipe r0
-		container.
-	showerPrimaryId : tables.UInt8Col
-		Particle type id for the shower primary particle. From Monte Carlo
-		simulation parameters.
-	coreX : tables.Float32Col
-		Shower core position x coordinate. From Monte Carlo simulation
-		parameters.
-	coreY : tables.Float32Col
-		Shower core position y coordinate. From Monte Carlo simulation
-		parameters.
-	h_first_int : tables.Float32Col
-		Height of shower primary particle first interaction. From Monte Carlo
-		simulation parameters.
-	energy : tables.Float32Col
-		Energy of the shower primary particle. From Monte Carlo simulation
-		parameters.
-	az : tables.Float32Col
-		Shower azimuth angle. From Monte Carlo simulation parameters.
-	alt : tables.Float32Col
-		Shower altitude (zenith) angle. From Monte Carlo simulation parameters.
-	depthStart : tables.Float32Col
-		height of first interaction a.s.l. [m]
-	xmax : tables.Float32Col
-		Atmospheric depth of shower maximum [g/cm^2], derived from all charged particles
-	hmax : tables.Float32Col
-		Height of shower maximum [m] in xmax
-	emax : tables.Float32Col
-		Atm. depth of maximum in electron number [electron number]
-	cmax : tables.Float32Col
-		Atm. depth of max. in Cherenkov photon emission [m]
-	"""
-
-	eventId = tables.UInt64Col()
-	obsId = tables.UInt64Col()
-	showerPrimaryId = tables.UInt8Col()
-	coreX = tables.Float32Col()
-	coreY = tables.Float32Col()
-	h_first_int = tables.Float32Col()
-	energy = tables.Float32Col()
-	az = tables.Float32Col()
-	alt = tables.Float32Col()
-	depthStart = tables.Float32Col()
-	xmax = tables.Float32Col()
-	hmax = tables.Float32Col()
-	emax = tables.Float32Col()
-	cmax = tables.Float32Col()
-	
-
-def createCosrika(fileh, source):
-	'''
-	Create the corsika data as a group in hdf5
-	------
-	Parameter :
-		fileh : hdf5 file to be used
-		source : source of a simtel file
-	'''
-	corsikaGroup = fileh.create_group("/", 'Corsika', 'Simulated event properties')
-	
-	#Find the appropriate values in simtel
-	targetName = "Name of the corresponding target"
-	altitudeMin = np.float32(0.0)
-	altitudeMax = np.float32(0.0)
-	azimuthMin = np.float32(0.0)
-	azimuthMax = np.float32(0.0)
-	isDiffuseMode = np.bool(False)
-	coreMinX = np.float32(0.0)
-	coreMaxX = np.float32(0.0)
-	coreMinY = np.float32(0.0)
-	coreMaxY = np.float32(0.0)
-	nbUseShower = np.uint64(0)
-	
-	#Put the values in the hdf5 file
-	fileh.create_array(corsikaGroup, 'targetName', np.array(targetName), "Name of the corresponding target")
-	fileh.create_array(corsikaGroup, 'altitudeMin', altitudeMin, "Minimum altitude of the simulated showers in radian")
-	fileh.create_array(corsikaGroup, 'altitudeMax', altitudeMax, "Maximum altitude of the simulated showers in radian")
-	fileh.create_array(corsikaGroup, 'azimuthMin', azimuthMin, "Minimum azimuth of the simulated showers in radian")
-	fileh.create_array(corsikaGroup, 'azimuthMax', azimuthMax, "Maximum azimuth of the simulated showers in radian")
-	fileh.create_array(corsikaGroup, 'isDiffuseMode', isDiffuseMode, "True is the events are diffuse, False is they are point like")
-	fileh.create_array(corsikaGroup, 'coreMinX', coreMinX, "Minimum value of the simulated impact parameters on the X axis in meters")
-	fileh.create_array(corsikaGroup, 'coreMaxX', coreMaxX, "Maximum value of the simulated impact parameters on the X axis in meters")
-	fileh.create_array(corsikaGroup, 'coreMinY', coreMinY, "Minimum value of the simulated impact parameters on the Y axis in meters")
-	fileh.create_array(corsikaGroup, 'coreMaxY', coreMaxY, "Maximum value of the simulated impact parameters on the Y axis in meters")
-	fileh.create_array(corsikaGroup, 'nbUseShower', nbUseShower, "Number of used shower per event")
-	
-	#Create the table of cosrika event(+shower)
-	tableMcCorsikaEvent = fileh.create_table(corsikaGroup, 'tabCorsikaEvent', MCCorsikaEvent, "Table of all monte carlo event")
-	#Do something with it
-	return tableMcCorsikaEvent.row
 
 
 def appendCorsikaEvent(tableMcCorsikaEvent, event):
@@ -699,6 +654,8 @@ def main():
 	
 	print('Create file structure')
 	tableMcCorsikaEvent = createFileStructure(fileh, telInfo_from_evt)
+	
+	fillSimulationHeaderInfo(fileh, inputFileName)
 	
 	source = event_source(inputFileName)
 	
