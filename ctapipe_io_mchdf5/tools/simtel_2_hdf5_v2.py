@@ -843,8 +843,7 @@ def appendEventTelescopeData(hfile, event):
 		waveform = dicoTel[telId].waveform
 		#print('waveform.shape:', waveform.shape)
 		telNode = hfile.get_node("/r1", 'Tel_' + str(telId - 1))
-		#TODO : get the photo_electron_image
-		photo_electron_image = None
+		photo_electron_image = event.mc.tel[telId].photo_electron_image
 		appendWaveformInTelescope(telNode, waveform, photo_electron_image, event.r0.event_id, event.trig.gps_time.value)
 		
 
@@ -876,9 +875,6 @@ def main():
 	
 	print('Fill the simulation header informations')
 	fillSimulationHeaderInfo(hfile, inputFileName)
-	
-	
-	
 	
 	source = event_source(inputFileName)
 	
