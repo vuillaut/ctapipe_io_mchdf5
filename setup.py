@@ -8,7 +8,8 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 
 entry_points = {}
-entry_points['console_scripts'] = ['simtel2hdf5 = ctapipe_io_mchdf5.tools.simtel_2_hdf5:main']
+entry_points['console_scripts'] = ['simtel2hdf5 = ctapipe_io_mchdf5.tools.simtel_2_hdf5:main',
+				   'simtel2hdf5v2 = ctapipe_io_mchdf5.tools.simtel_2_hdf5_v2:main']
 
 setup(
 	name='ctapipe_io_mchdf5',
