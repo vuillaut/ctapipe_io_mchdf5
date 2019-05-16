@@ -1,5 +1,6 @@
 
 Enable the multithread compression and get the performances with tables.parameters.MAX_BLOSC_THREADS
 
+See the documentation of DRIVER_DIRECT_ALIGNMENT
 
 
