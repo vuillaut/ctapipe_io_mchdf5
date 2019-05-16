@@ -11,11 +11,11 @@ def getNbTel(inputFileName):
 	-------
 		number of telescopes in the simulation file
 	'''
-	source = event_source(inputFileName)
-	itSource = iter(source)
-	evt0 = next(itSource)
-	nbTel = evt0.inst.subarray.num_tels
-	return nbTel
+	with event_source(inputFileName) as source:
+		itSource = iter(source)
+		evt0 = next(itSource)
+		nbTel = evt0.inst.subarray.num_tels
+		return nbTel
 
 
 

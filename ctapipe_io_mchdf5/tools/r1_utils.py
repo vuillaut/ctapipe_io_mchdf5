@@ -34,8 +34,6 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 	telIndex = telId - 1
 	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telId), 'Data of telescopes '+str(telId))
 	
-	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events")
-	
 	telType = np.uint64(telInfo[TELINFO_TELTYPE])
 	
 	nbGain = np.uint64(telInfo[TELINFO_NBGAIN])
@@ -66,6 +64,8 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 	if infoTabGain is not None:
 		hfile.create_array(camTelGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
 	
+	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events")
+	
 	image_shape = (nbSlice, nbPixel)
 	
 	columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
@@ -89,12 +89,12 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 		"pedestal" :  tables.Float32Col(shape=ped_shape)
 	}
 	description_pedestal = type('description columns_dict_pedestal', (tables.IsDescription,), columns_dict_pedestal)
-	tablePedestal = hfile.create_table(camTelGroup, 'pedestal', description_pedestal, "Table of the pedestal for high and low gain")
+	tablePedestal = hfile.create_table(camTelGroup, 'pedestal', description_pedestal, "Table of the pedestal for high and low gain", expectedrows=1)
 	
 	if infoTabPed is not None:
 		tabPedForEntry = tablePedestal.row
 		tabPedForEntry["first_event_id"] = np.uint64(0)
-		tabPedForEntry["last_event_id"] = np.uint64(-1)
+		tabPedForEntry["last_event_id"] = np.uint64(1)
 		tabPedForEntry["pedestal"] = tabPed
 		tabPedForEntry.append()
 		tablePedestal.flush()
@@ -130,6 +130,7 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 	tabtrigger = telNode.trigger.row
 	tabtrigger['event_id'] = eventId
 	
+	
 	#TODO : use the proper convertion from timeStamp to the time in second and nanosecond
 	if isinstance(timeStamp, numbers.Number):
 		timeSecond = int(timeStamp)
@@ -138,20 +139,19 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 		tabtrigger['time_qns'] = timeMicroSec
 	tabtrigger.append()
 	
-	#If the bug is still there I can try without np.asarray function
 	tabWaveformHi = telNode.waveformHi.row
-	tabWaveformHi['waveformHi'] = np.asarray(np.swapaxes(waveform[0], 0, 1), dtype=np.uint16)
+	tabWaveformHi['waveformHi'] = waveform[0].swapaxes(0, 1)
 	tabWaveformHi.append()
 	
 	if waveform.shape[0] > 1:
 		tabWaveformLo = telNode.waveformLo.row
-		tabWaveformLo['waveformLo'] = np.asarray(np.swapaxes(waveform[1], 0, 1), dtype=np.uint16)
+		tabWaveformLo['waveformLo'] = waveform[1].swapaxes(0, 1)
 		tabWaveformLo.append()
+	
 	if photo_electron_image is not None and isinstance(photo_electron_image, list):
 		tabPhotoElectronImage = telNode.photo_electron_image.row
-		tabPhotoElectronImage["photo_electron_image"] = np.asarray(photo_electron_image, dtype=np.float32)
+		tabPhotoElectronImage["photo_electron_image"] = photo_electron_image
 		tabPhotoElectronImage.append()
-	
 	
 
 
