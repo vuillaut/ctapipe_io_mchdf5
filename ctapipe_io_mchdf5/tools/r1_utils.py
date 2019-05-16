@@ -138,12 +138,12 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 	tabtrigger.append()
 	
 	tabWaveformHi = telNode.waveformHi.row
-	tabWaveformHi['waveformHi'] = np.asarray(np.swapaxes(waveform[0], 0, 1), dtype=np.float32)
+	tabWaveformHi['waveformHi'] = np.asarray(np.swapaxes(waveform[0], 0, 1), dtype=np.uint16)
 	tabWaveformHi.append()
 	
 	if waveform.shape[0] > 1:
 		tabWaveformLo = telNode.waveformLo.row
-		tabWaveformLo['waveformLo'] = np.asarray(np.swapaxes(waveform[1], 0, 1), dtype=np.float32)
+		tabWaveformLo['waveformLo'] = np.asarray(np.swapaxes(waveform[1], 0, 1), dtype=np.uint16)
 		tabWaveformLo.append()
 	
 	if photo_electron_image is not None and isinstance(photo_electron_image, list):
