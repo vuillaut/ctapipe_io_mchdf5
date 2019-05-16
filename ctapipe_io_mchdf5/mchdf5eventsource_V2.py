@@ -180,12 +180,20 @@ class MCHDF5EventSourceV2(EventSource):
 				telNode = self.run.get_node("/r1", 'Tel_' + str(telescopeId))
 				
 				matWaveform = telNode.waveformHi.read(event, event + 1)
-				matWaveform = matWaveform["waveformHi"]
+				matWaveform = matWaveform["waveformHi"][0]
+				matSignalPSHi = matWaveform.swapaxes(0, 1)
+				try:
+					waveformLo = telNode.waveformLo.read(event, event + 1)
+					waveformLo = waveformLo["waveformLo"][0]
+					
+					matSignalPSLo = waveformLo.swapaxes(0, 1)
+					tabHiLo = np.stack((matSignalPSHi, matSignalPSLo))
+					data.r0.tel[telescopeId].waveform = tabHiLo
+				except Exception as e:
+					print(e)
+					data.r0.tel[telescopeId].waveform = np.expand_dims(matSignalPSHi, axis=0)
 				
-				matSignalPS = matWaveform.swapaxes(1, 2)
-				data.r0.tel[telescopeId].waveform = matSignalPS
-				
-				#data.r0.tel[telescopeId].image= matSignalPS.sum(axis=2)
+				#data.r0.tel[telescopeId].image= matSignalPSHi.sum(axis=2)
 				#data.r0.tel[telescopeId].num_trig_pix = file.get_num_trig_pixels(telescopeId)
 				#data.r0.tel[telescopeId].trig_pix_id = file.get_trig_pixels(telescopeId)
 				
