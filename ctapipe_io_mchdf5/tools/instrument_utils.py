@@ -77,6 +77,8 @@ def fillSubarrayLayout(hfile, telInfo_from_evt):
 		tabSubLayout["num_mirrors"] = np.uint64(telInfo[TELINFO_NBMIRROR])
 		tabSubLayout["camera_type"] = camName + "Cam"
 		tabSubLayout["tel_description"] = "Description"
+		tabSubLayout.append()
+	tableSubarrayLayout.flush()
 
 
 def createCameraTable(hfile, telId, telInfo):
