@@ -97,6 +97,7 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 		tabPedForEntry["last_event_id"] = np.uint64(-1)
 		tabPedForEntry["pedestal"] = tabPed
 		tabPedForEntry.append()
+		tablePedestal.flush()
 
 
 def createR1Dataset(hfile, telInfo_from_evt):
@@ -108,7 +109,6 @@ def createR1Dataset(hfile, telInfo_from_evt):
 	'''
 	#Group : r1
 	hfile.create_group("/", 'r1', 'Raw data waveform informations of the run')
-	hfile.create_group("/r1", 'event', 'Raw data waveform events')
 	
 	#The group in the r1 group will be completed on the fly with the informations collected in telInfo_from_evt
 	for telId, telInfo in telInfo_from_evt.items():
@@ -147,11 +147,12 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 		tabWaveformLo = telNode.waveformLo.row
 		tabWaveformLo['waveformLo'] = np.asarray(np.swapaxes(waveform[1], 0, 1), dtype=np.uint16)
 		tabWaveformLo.append()
-	
 	if photo_electron_image is not None and isinstance(photo_electron_image, list):
 		tabPhotoElectronImage = telNode.photo_electron_image.row
 		tabPhotoElectronImage["photo_electron_image"] = np.asarray(photo_electron_image, dtype=np.float32)
 		tabPhotoElectronImage.append()
+	
+	
 
 
 def appendEventTelescopeData(hfile, event):

@@ -32,6 +32,26 @@ def createFileStructure(hfile, telInfo_from_evt):
 	return tableMcEvent
 
 
+def flushR1Tables(hfile):
+	'''
+	Flush all the R1 tables
+	Parameters:
+		hfile : file to be used
+	'''
+	for telNode in hfile.walk_nodes("/r1", "Group"):
+		try:
+			nbGain = np.uint64(telNode.nbGain.read())
+			telNode.photo_electron_image.flush()
+			telNode.waveformHi.flush()
+			if nbGain > 1:
+				telNode.waveformLo.flush()
+			
+			
+		except Exception as e:
+			print(e)
+	
+
+
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-i', '--input', help="simtel r1 input file",
@@ -87,9 +107,11 @@ def main():
 		print("\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r{} / {}".format(nb_event, max_event), end="")
 		if nb_event >= max_event:
 			break
+	print("\nFlushing tables")
 	if isSimulationMode:
 		tableMcCorsikaEvent.flush()
 		
+	flushR1Tables(hfile)
 	hfile.close()
 	print('\nDone')
 

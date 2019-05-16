@@ -3,14 +3,24 @@
 
 import tables
 import numpy as np
-from tables import open_file
 from ctapipe.io import event_source
 import argparse
 
 
-	
+def getNbTel(event):
+	'''
+	Get the number of telescopes in the run
+	'''
+	nbTel = event.inst.subarray.num_tels
+	return nbTel
+
+
 def getTelescopeInfoFromEvent(source, telescope_info, max_nb_tel): 
-	for evt in source: 
+	source.back_seekable = True
+	for evt in source:
+		if max_nb_tel == 0:
+			max_nb_tel = getNbTel(evt)
+		
 		for tel_id in evt.r0.tels_with_data:
 			if not tel_id in telescope_info:
 				ref_shape = evt.mc.tel[tel_id].reference_pulse_shape
@@ -20,7 +30,7 @@ def getTelescopeInfoFromEvent(source, telescope_info, max_nb_tel):
 				telescope_info[tel_id] = (ref_shape, nb_slice, ped, gain)
 		if len(telescope_info) >= max_nb_tel:
 			return
-	
+
 
 def getCameraTypeFromName(camName):
 	'''
@@ -51,27 +61,17 @@ def getCameraTypeFromName(camName):
 		return 7
 
 
-def getNbTel(source):
-	itSource = iter(source)
-	evt0 = next(itSource)
-	nbTel = evt0.inst.subarray.num_tels
-	return nbTel
-
-
-def createRunHeader(fileh, source):
+def createRunHeader(fileh, evt0):
 	'''
 	Create the run header as a group in hdf5
 	------
 	Parameter :
 		fileh : hdf5 file to be used
-		source : source of a simtel file
+		evt0 : first event of a simtel file
 	'''
 	runHeaderGroup = fileh.create_group("/", 'RunHeader', 'Header of the run')
 	
-	nbTel = getNbTel(source)
-	#I take the first event, it may be useful
-	itSource = iter(source)
-	evt0 = next(itSource)
+	nbTel = getNbTel(evt0)
 	
 	#Find the appropriate values in simtel
 	posTelX = np.asarray(evt0.inst.subarray.tel_coords.x, dtype=np.float32)
@@ -159,28 +159,63 @@ class MCCorsikaEvent(tables.IsDescription):
 	cmax = tables.Float32Col()
 	
 
-def createCosrika(fileh, source):
+def createCosrika(fileh, event):
 	'''
 	Create the corsika data as a group in hdf5
 	------
 	Parameter :
 		fileh : hdf5 file to be used
-		source : source of a simtel file
+		event : first event of a simtel file
 	'''
 	corsikaGroup = fileh.create_group("/", 'Corsika', 'Simulated event properties')
 	
 	#Find the appropriate values in simtel
 	targetName = "Name of the corresponding target"
-	altitudeMin = np.float32(0.0)
-	altitudeMax = np.float32(0.0)
-	azimuthMin = np.float32(0.0)
-	azimuthMax = np.float32(0.0)
-	isDiffuseMode = np.bool(False)
+	altitudeMin = np.float32(event.mcheader.min_alt)
+	altitudeMax = np.float32(event.mcheader.max_alt)
+	azimuthMin = np.float32(event.mcheader.min_az)
+	azimuthMax = np.float32(event.mcheader.max_az)
+	isDiffuseMode = np.bool(event.mcheader.diffuse)
+	
 	coreMinX = np.float32(0.0)
 	coreMaxX = np.float32(0.0)
 	coreMinY = np.float32(0.0)
 	coreMaxY = np.float32(0.0)
-	nbUseShower = np.uint64(0)
+	nbUseShower = np.uint64(event.mcheader.shower_reuse)
+	nbShower = np.uint64(event.mcheader.num_showers)
+	
+	run_array_direction = np.float32(event.mcheader.run_array_direction)
+	corsika_version = np.uint64(event.mcheader.corsika_version)
+	simtel_version = np.uint64(event.mcheader.simtel_version)
+	energy_range_min = np.float32(event.mcheader.energy_range_min)
+	energy_range_max = np.float32(event.mcheader.energy_range_max)
+	prod_site_B_total = np.float32(event.mcheader.prod_site_B_total)
+	prod_site_B_declination = np.float32(event.mcheader.prod_site_B_declination)
+	prod_site_B_inclination = np.float32(event.mcheader.prod_site_B_inclination)
+	prod_site_alt = np.float32(event.mcheader.prod_site_alt)
+	prod_site_array = np.array(list(event.mcheader.prod_site_array))
+	prod_site_coord = np.array(list(event.mcheader.prod_site_coord))
+	prod_site_subarray = np.array(list(event.mcheader.prod_site_subarray))
+	spectral_index = np.float32(event.mcheader.spectral_index)
+	shower_prog_start = np.float64(event.mcheader.shower_prog_start)
+	shower_prog_id = np.uint64(event.mcheader.shower_prog_id)
+	detector_prog_start = np.float64(event.mcheader.detector_prog_start)
+	detector_prog_id = np.uint64(event.mcheader.detector_prog_id)
+	max_viewcone_radius = np.float32(event.mcheader.max_viewcone_radius)
+	min_viewcone_radius = np.float32(event.mcheader.min_viewcone_radius)
+	max_scatter_range = np.float32(event.mcheader.max_scatter_range)
+	min_scatter_range = np.float32(event.mcheader.min_scatter_range)
+	core_pos_mode = event.mcheader.core_pos_mode
+	injection_height = np.float32(event.mcheader.injection_height)
+	atmosphere = np.uint64(event.mcheader.atmosphere)
+	corsika_iact_options = event.mcheader.corsika_iact_options
+	corsika_low_E_model = np.float32(event.mcheader.corsika_low_E_model)
+	corsika_high_E_model = np.float32(event.mcheader.corsika_high_E_model)
+	corsika_bunchsize = np.float64(event.mcheader.corsika_bunchsize)
+	corsika_wlen_min = np.float64(event.mcheader.corsika_wlen_min)
+	corsika_wlen_max = np.float64(event.mcheader.corsika_wlen_max)
+	corsika_low_E_detail = np.float64(event.mcheader.corsika_low_E_detail)
+	corsika_high_E_detail = np.float64(event.mcheader.corsika_high_E_detail)
 	
 	#Put the values in the hdf5 file
 	fileh.create_array(corsikaGroup, 'targetName', np.array(targetName), "Name of the corresponding target")
@@ -194,11 +229,45 @@ def createCosrika(fileh, source):
 	fileh.create_array(corsikaGroup, 'coreMinY', coreMinY, "Minimum value of the simulated impact parameters on the Y axis in meters")
 	fileh.create_array(corsikaGroup, 'coreMaxY', coreMaxY, "Maximum value of the simulated impact parameters on the Y axis in meters")
 	fileh.create_array(corsikaGroup, 'nbUseShower', nbUseShower, "Number of used shower per event")
+	fileh.create_array(corsikaGroup, 'nbShower', nbShower, "Number of showers")
+	
+	fileh.create_array(corsikaGroup, 'run_array_direction', run_array_direction, "the tracking/pointing direction in [radians].\nDepending on 'tracking_mode' this either\ncontains: [0]=Azimuth, [1]=Altitude in mode 0,\nOR [0]=R.A., [1]=Declination in mode 1")
+	fileh.create_array(corsikaGroup, 'corsika_version', corsika_version, "CORSIKA version * 1000")
+	fileh.create_array(corsikaGroup, 'simtel_version', simtel_version, "sim_telarray version * 1000")
+	fileh.create_array(corsikaGroup, 'energy_range_min', energy_range_min, "Lower limit of energy range of primary particle [TeV]")
+	fileh.create_array(corsikaGroup, 'energy_range_max', energy_range_max, "Upper limit of energy range of primary particle [TeV]")
+	fileh.create_array(corsikaGroup, 'prod_site_B_total', prod_site_B_total, "total geomagnetic field [uT]")
+	fileh.create_array(corsikaGroup, 'prod_site_B_declination', prod_site_B_declination, "magnetic declination [rad]")
+	fileh.create_array(corsikaGroup, 'prod_site_B_inclination', prod_site_B_inclination, "magnetic inclination [rad]")
+	fileh.create_array(corsikaGroup, 'prod_site_alt', prod_site_alt, "height of observation level [m]")
+	fileh.create_array(corsikaGroup, 'prod_site_array', prod_site_array, "site array")
+	fileh.create_array(corsikaGroup, 'prod_site_coord', prod_site_coord, "site (long., lat.) coordinates")
+	fileh.create_array(corsikaGroup, 'prod_site_subarray', prod_site_subarray, "site subarray")
+	fileh.create_array(corsikaGroup, 'spectral_index', spectral_index, "Power-law spectral index of spectrum")
+	fileh.create_array(corsikaGroup, 'shower_prog_start', shower_prog_start, "Time when shower simulation started, CORSIKA: only date")
+	fileh.create_array(corsikaGroup, 'shower_prog_id', shower_prog_id, "CORSIKA=1, ALTAI=2, KASCADE=3, MOCCA=4")
+	fileh.create_array(corsikaGroup, 'detector_prog_start', detector_prog_start, "Time when detector simulation started")
+	fileh.create_array(corsikaGroup, 'detector_prog_id', detector_prog_id, "simtelarray=1")
+	fileh.create_array(corsikaGroup, 'max_viewcone_radius', max_viewcone_radius, "Maximum viewcone radius [deg]")
+	fileh.create_array(corsikaGroup, 'min_viewcone_radius', min_viewcone_radius, "Minimum viewcone radius [deg]")
+	fileh.create_array(corsikaGroup, 'max_scatter_range', max_scatter_range, "Maximum scatter range [m]")
+	fileh.create_array(corsikaGroup, 'min_scatter_range', min_scatter_range, "Maximum scatter range [m]")
+	fileh.create_array(corsikaGroup, 'core_pos_mode', core_pos_mode, "Core Position Mode (fixed/circular/...)")
+	fileh.create_array(corsikaGroup, 'injection_height', injection_height, "Height of particle injection [m]")
+	fileh.create_array(corsikaGroup, 'atmosphere', atmosphere, "Atmospheric model number")
+	fileh.create_array(corsikaGroup, 'corsika_iact_options', corsika_iact_options, "Detector MC information")
+	fileh.create_array(corsikaGroup, 'corsika_low_E_model', corsika_low_E_model, "Detector MC information")
+	fileh.create_array(corsikaGroup, 'corsika_high_E_model', corsika_high_E_model, "Detector MC information")
+	fileh.create_array(corsikaGroup, 'corsika_bunchsize', corsika_bunchsize, "Number of photons per bunch")
+	fileh.create_array(corsikaGroup, 'corsika_wlen_min', corsika_wlen_min, "Minimum wavelength of cherenkov light [nm]")
+	fileh.create_array(corsikaGroup, 'corsika_wlen_max', corsika_wlen_max, "Maximum wavelength of cherenkov light [nm]")
+	fileh.create_array(corsikaGroup, 'corsika_low_E_detail', corsika_low_E_detail, "Detector MC information")
+	fileh.create_array(corsikaGroup, 'corsika_high_E_detail', corsika_high_E_detail, "Detector MC information")
 	
 	#Create the table of cosrika event(+shower)
 	tableMcCorsikaEvent = fileh.create_table(corsikaGroup, 'tabCorsikaEvent', MCCorsikaEvent, "Table of all monte carlo event")
 	#Do something with it
-	return tableMcCorsikaEvent.row
+	return tableMcCorsikaEvent
 
 
 def appendCorsikaEvent(tableMcCorsikaEvent, event):
@@ -228,39 +297,38 @@ def appendCorsikaEvent(tableMcCorsikaEvent, event):
 	tableMcCorsikaEvent.append()
 
 
-def createGroupOfAllTelescope(fileh, nbTel, source):
+def createGroupOfAllTelescope(fileh, nbTel, evt0, telInfo_from_evt, listTelescopeLayout):
 	'''
 	Create the group of all the telescope data
 	------------------
 	Parameters :
 		fileh : HDF5 file to be completed
 		nbTel : number of telescopes
-		source : simtel data
+		evt0 : first event of simtel data
+		listTelescopeLayout : layout to be used to select the telescopes
 	'''
-	itSource = iter(source)
-	evt0 = next(itSource)
 	dicoTelInfo = evt0.inst.subarray.tel
 	
-	telInfo_from_evt = dict() # Key is tel id, value (ref_shape, slice, ped, gain)
-	getTelescopeInfoFromEvent(source, telInfo_from_evt, nbTel)
-	
 	for telIndexIter in range(0, nbTel):
+		telIndex = np.uint64(telIndexIter)
+		telId = np.uint64(telIndex + 1)
+		if len(listTelescopeLayout) != 0:
+			if not telId in listTelescopeLayout:
+				continue
+		
 		telInfo = dicoTelInfo[telIndexIter + 1]
 		#Maybe, we have to do some thing with this to avoid trouble due to this stupid thing
 		cameraRotation = telInfo.camera.cam_rotation.value
 		
 		telGroup = fileh.create_group("/Tel", 'Tel_' + str(telIndexIter), 'Telescopes ' + str(telIndexIter))
 
-		telIndex = np.uint64(telIndexIter)
 		telType = np.uint64(getCameraTypeFromName(telInfo.camera.cam_id))
-		telId = np.uint64(telIndex + 1)
+		
 		
 		nbPixel = telInfo.camera.n_pixels
 		tabPixelX = np.asarray(telInfo.camera.pix_x, dtype=np.float32)
 		tabPixelY = np.asarray(telInfo.camera.pix_y, dtype=np.float32)
 		
-		
-		   
 		if telId in telInfo_from_evt:
 			tabRefShape = np.asarray(telInfo_from_evt[telId][0], dtype=np.float32)
 			nbSample = tabRefShape.shape[1]
@@ -285,31 +353,24 @@ def createGroupOfAllTelescope(fileh, nbTel, source):
 
 			#Create the table of images/waveform of the telescope
 			image_shape = (nbGain, nbSlice, nbPixel)
-			'''
-			columns_dict = {
-				"eventId": tables.UInt64Col(),
-				"timeStamp": tables.Float64Col(),
-				"waveform": tables.Float32Col(shape=image_shape)
-			}
-
-			description = type('description', (tables.IsDescription,), columns_dict)
-
-			table = fileh.create_table(telGroup, "tabEvent", description, "Table of the telescopes data (video)")
-			'''
+			
 			columns_dict_event_id  = {"eventId": tables.UInt64Col()}
 			columns_dict_timestamp = {"timestamp": tables.Float64Col()}
 			columns_dict_waveform  = {"waveform": tables.UInt16Col(shape=image_shape)}
+			columns_dict_photo_electron_image  = {"photo_electron_image": tables.Int32Col(shape=nbPixel)}
 			
 			description_event_id = type('description event_id', (tables.IsDescription,), columns_dict_event_id)
 			description_timestamp = type('description timestamp', (tables.IsDescription,), columns_dict_timestamp)
 			description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
+			description_dict_photo_electron_image = type('description columns_dict_photo_electron_image', (tables.IsDescription,), columns_dict_photo_electron_image)
 			
 			fileh.create_table(telGroup, 'eventId', description_event_id, "Table of event id")
 			fileh.create_table(telGroup, 'timestamp', description_timestamp, "Table of timestamp")
 			fileh.create_table(telGroup, 'waveform', description_waveform, "Table of waveform")
-			
+			fileh.create_table(telGroup, 'photo_electron_image', description_dict_photo_electron_image, "Table of pure signal recorded by the camera")
 
-def appendWaveformInTelescope(telNode, waveform, eventId, timeStamp):
+
+def appendWaveformInTelescope(telNode, waveform, eventId, timeStamp, photo_electron_image):
 	'''
 	Append a waveform signal (to be transposed) into a telescope node
 	-------------------
@@ -318,6 +379,7 @@ def appendWaveformInTelescope(telNode, waveform, eventId, timeStamp):
 		waveform : waveform signal to be used
 		eventId : id of the corresponding event
 		timeStamp : time of the event in UTC
+		photo_electron_image : image of pure signal recorded by the camera
 	'''
 	#We transpose the waveform :
 	tabEventId = telNode.eventId.row
@@ -327,30 +389,57 @@ def appendWaveformInTelescope(telNode, waveform, eventId, timeStamp):
 	tabTimestamp['timestamp'] = timeStamp
 	   
 	tabWaveform = telNode.waveform.row
-	tabWaveform['waveform'] = np.swapaxes(waveform,1 , 2)
+	tabWaveform['waveform'] = np.swapaxes(waveform, 1, 2)
 	
-   
+	tabPhotoElectronImage = telNode.photo_electron_image.row
+	tabPhotoElectronImage['photo_electron_image'] = photo_electron_image
+	
 	tabEventId.append()
 	tabTimestamp.append()
 	tabWaveform.append()
+	tabPhotoElectronImage.append()
 
 
-def appendEventTelescopeData(fileh, event):
+def appendEventTelescopeData(fileh, event, listTelescopeLayout):
 	'''
 	Append data from event in telescopes
 	--------------
 	Parameters :
 		fileh : HDF5 file to be used
 		event : current event
+		listTelescopeLayout : layout to be used to select the telescopes
 	'''
 	tabTelWithData = event.r0.tels_with_data
 	dicoTel = event.r0.tel
 	for telId in tabTelWithData:
+		if len(listTelescopeLayout) != 0:
+			if not telId in listTelescopeLayout:
+				continue
+		
 		waveform = dicoTel[telId].waveform
+		photo_electron_image = event.mc.tel[telId].photo_electron_image
 		#print('waveform.shape:', waveform.shape)
 		telNode = fileh.get_node("/Tel", 'Tel_' + str(telId - 1))
-		appendWaveformInTelescope(telNode, waveform, event.r0.event_id, event.trig.gps_time.value)
-		
+		appendWaveformInTelescope(telNode, waveform, event.r0.event_id, event.trig.gps_time.value, photo_electron_image)
+
+
+def initialisationGeneric(fileh, event, telInfo_from_evt, listTelescopeLayout):
+	nbTel = getNbTel(event)
+	print("Number of telescope : ",nbTel)
+	createRunHeader(fileh, event)
+	#We can set the Monte Carlo values durring the iteration on source
+	print('createCosrika')
+	nodeMcCorsikaEvent = createCosrika(fileh, event)
+	tableMcCorsikaEvent = nodeMcCorsikaEvent.row
+	
+	#Create the group of all telescopes
+	allTelGroup = fileh.create_group("/", 'Tel', 'Telescopes data')
+	#Create all the telescopes in the /Tel group
+	print('createGroupOfAllTelescope start')
+	createGroupOfAllTelescope(fileh, nbTel, event, telInfo_from_evt, listTelescopeLayout)
+	print('createGroupOfAllTelescope done')
+	return nodeMcCorsikaEvent, tableMcCorsikaEvent, allTelGroup
+
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -358,45 +447,64 @@ def main():
 						required=True)
 	parser.add_argument('-o', '--output', help="hdf5 r1 output file",
 						required=True)
+	
+	parser.add_argument('-l', '--layout', help="hdf5 r1 layout file to select telescope to be converted",
+						required=False)
+	
 	parser.add_argument('-m', '--max_event', help="maximum event to reconstuct",
 						required=False, type=int)
 	args = parser.parse_args()
-
-	source = event_source(args.input)
-	nbTel = getNbTel(source)
-	print("Number of telescope : ",nbTel)
-	fileh = tables.open_file(args.output, mode = "w")
-
-	createRunHeader(fileh, source)
-	#We can set the Monte Carlo values durring the iteration on source
-	print('createCosrika')
-	tableMcCorsikaEvent = createCosrika(fileh, source)
-
-	#Create the group of all telescopes
-	allTelGroup = fileh.create_group("/", 'Tel', 'Telescopes data')
-	#Create all the telescopes in the /Tel group
-	print('createGroupOfAllTelescope start')
-	createGroupOfAllTelescope(fileh, nbTel, source)
-	print('createGroupOfAllTelescope done')
-
-
+	
 	nb_event = 0
-	max_event = 0
+	max_event = 10000000
+	listTelescopeLayout = []
 	if args.max_event != None:
 		max_event = int(args.max_event)
-
-	for event in source:
+	
+	if args.layout != None:
+		with open(args.layout, 'r') as filehandle:  
+			for line in filehandle:
+				# remove linebreak which is the last character of the string
+				currentPlace = line[:-1]
+				listTelescopeLayout.append(int(currentPlace))
+		
+		print("Use layout file : '"+args.layout+"'", "which select telescopes :")
+		print("Use layout of ",len(listTelescopeLayout), "telescopes :",listTelescopeLayout)
+		if len(listTelescopeLayout) == 0:
+			print("The layout cannot be empty!!!")
+			sys.exit(-1) 
+	else:
+		print("No layout used")
+	
+	zstdFilter = tables.Filters(complevel=6, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
+	fileh = tables.open_file(args.output, mode = "w", filters=zstdFilter)
+	
+	source = event_source(args.input)
+	telInfo_from_evt = dict() # Key is tel id, value (ref_shape, slice, ped, gain)
+	nbTel = 0
+	getTelescopeInfoFromEvent(source, telInfo_from_evt, nbTel)
+	source = event_source(args.input)
+	
+	for i,event in enumerate(source):
+		source.back_seekable = True
+		if i == 0:
+			#We do all the stuff for one event
+			nodeMcCorsikaEvent, tableMcCorsikaEvent, allTelGroup = initialisationGeneric(fileh, event, telInfo_from_evt, listTelescopeLayout)
+		
 		#I found the timestamp
 		eventTimeStamp = np.float64(event.trig.gps_time.value)
 		obsId = event.r0.obs_id
 		eventId = event.r0.event_id
 		appendCorsikaEvent(tableMcCorsikaEvent, event)
-		appendEventTelescopeData(fileh, event)
+		appendEventTelescopeData(fileh, event, listTelescopeLayout)
 		nb_event+=1
 		print("{} / {}".format(nb_event, max_event), end="\r")
 		if nb_event >= max_event:
 			break
-	print('Done')
+	
+	nodeMcCorsikaEvent.flush()
+	fileh.close()
+	print("Processing of",nb_event,"events => Done")
 
 
 if __name__ == '__main__':
