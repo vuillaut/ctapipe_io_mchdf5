@@ -9,7 +9,8 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 entry_points = {}
 entry_points['console_scripts'] = ['simtel2hdf5v1 = ctapipe_io_mchdf5.tools.simtel_2_hdf5_v1:main',
-				   'simtel2hdf5v2 = ctapipe_io_mchdf5.tools.simtel_2_hdf5_v2:main']
+				   'simtel2hdf5v2 = ctapipe_io_mchdf5.tools.simtel_2_hdf5_v2:main',
+				   'mchdf5v2minselection = ctapipe_io_mchdf5.tools.mchdf5_min_selection:main']
 
 setup(
 	name='ctapipe_io_mchdf5',
@@ -19,20 +20,20 @@ setup(
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	entry_points = entry_points,
-	install_requires=[
-		'numpy>=1.14.0', 
-		'tables>=3.4.4',
-		'ctapipe',
-		'ctapipe-extra',
-		'pytest-cov'
-	],
+	#install_requires=[
+		#'numpy>=1.14.0', 
+		#'tables>=3.4.4',
+		#'ctapipe',
+		#'ctapipe-extra',
+		#'pytest-cov'
+	#],
+	#setup_requires=['pytest_runner'],
 	package_data={
 		'ctapipe_io_mchdf5': [
 			'tests/resources/*'
 		],
 	},
 	tests_require=['pytest'],
-	setup_requires=['pytest_runner'],
 	author='Pierre Aubert',
 	author_email='pierre.aubert@lapp.in2p3.fr',
 	license='Cecil-C',
