@@ -89,7 +89,7 @@ class MCHDF5EventSourceV2(EventSource):
 		# it after each yield
 		counter = 0
 		data = DataContainer()
-		data.meta['origin'] = "mchdf5"
+		data.meta['origin'] = "mchdf5v2"
 
 		# some hessio_event_source specific parameters
 		data.meta['input_url'] = self.input_url
@@ -177,10 +177,10 @@ class MCHDF5EventSourceV2(EventSource):
 
 			for telescopeId, telescopeIndex, event in event_list:
 				
-				telNode = self.run.get_node("/Tel", 'Tel_' + str(telescopeIndex))
+				telNode = self.run.get_node("/r1", 'Tel_' + str(telescopeId))
 				
 				matWaveform = telNode.waveformHi.read(event, event + 1)
-				matWaveform = matWaveform["waveform"]
+				matWaveform = matWaveform["waveformHi"]
 				
 				matSignalPS = matWaveform.swapaxes(1, 2)
 				data.r0.tel[telescopeId].waveform = matSignalPS
@@ -209,10 +209,10 @@ class MCHDF5EventSourceV2(EventSource):
 		"""
 		subarray = SubarrayDescription("MonteCarloArray")
 		
-		tabFocalTel = hfile.root.instrument.subarray.telescope.optics.col("equivalent_focal_length")
-		tabPosTelX = hfile.root.instrument.subarray.layout.col("pos_x")
-		tabPosTelY = hfile.root.instrument.subarray.layout.col("pos_y")
-		tabPosTelZ = hfile.root.instrument.subarray.layout.col("pos_z")
+		tabFocalTel = run.root.instrument.subarray.telescope.optics.col("equivalent_focal_length")
+		tabPosTelX = run.root.instrument.subarray.layout.col("pos_x")
+		tabPosTelY = run.root.instrument.subarray.layout.col("pos_y")
+		tabPosTelZ = run.root.instrument.subarray.layout.col("pos_z")
 		
 		tabPoslXYZ = np.ascontiguousarray(np.vstack((tabPosTelX, tabPosTelY, tabPosTelZ)).T)
 		
