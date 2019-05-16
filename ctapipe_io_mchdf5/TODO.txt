@@ -1,0 +1,5 @@
+
+Enable the multithread compression and get the performances with tables.parameters.MAX_BLOSC_THREADS
+
+
+

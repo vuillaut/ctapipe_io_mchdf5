@@ -137,6 +137,7 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 		tabtrigger['time_qns'] = timeMicroSec
 	tabtrigger.append()
 	
+	#If the bug is still there I can try without np.asarray function
 	tabWaveformHi = telNode.waveformHi.row
 	tabWaveformHi['waveformHi'] = np.asarray(np.swapaxes(waveform[0], 0, 1), dtype=np.uint16)
 	tabWaveformHi.append()
