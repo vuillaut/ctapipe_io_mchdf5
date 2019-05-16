@@ -21,6 +21,7 @@ TELINFO_NBMIRRORTILES = 12
 TELINFO_MIRRORAREA = 13
 TELINFO_NBGAIN = 14
 TELINFO_NBPIXEL = 15
+TELINFO_NBEVENT = 16
 
 def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 	'''
@@ -70,10 +71,12 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 					telY = posTelY[tel_id - 1]
 					telZ = posTelZ[tel_id - 1]
 					
-					telescope_info[tel_id] = (ref_shape, nb_slice, ped, gain, telType, focalLen, tabPixelX, tabPixelY, nbMirror,
-									telX, telY, telZ, nbMirrorTiles, mirrorArea, nbGain, nbPixel)
-			if len(telescope_info) >= max_nb_tel:
-				return telescope_info
+					telescope_info[tel_id] = [ref_shape, nb_slice, ped, gain, telType, focalLen, tabPixelX, tabPixelY, nbMirror,
+									telX, telY, telZ, nbMirrorTiles, mirrorArea, nbGain, nbPixel, 0]
+				else:
+					telescope_info[tel_id][TELINFO_NBEVENT] += 1
+			#if len(telescope_info) >= max_nb_tel:
+				#return telescope_info
 	return telescope_info
 
 

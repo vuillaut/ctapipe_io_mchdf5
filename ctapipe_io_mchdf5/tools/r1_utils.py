@@ -47,6 +47,8 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 	
 	nbPixel = np.uint64(telInfo[TELINFO_NBPIXEL])
 	
+	nbEvent = np.uint64(telInfo[TELINFO_NBEVENT])
+	
 	hfile.create_array(camTelGroup, 'nbPixel', nbPixel, "Number of pixels of the telescope")
 	hfile.create_array(camTelGroup, 'nbSlice', nbSlice, "Number of slices of the telescope")
 	hfile.create_array(camTelGroup, 'nbGain', nbGain, "Number of gain (channels) of the telescope")
@@ -64,23 +66,23 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 	if infoTabGain is not None:
 		hfile.create_array(camTelGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
 	
-	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events")
+	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events", expectedrows=nbEvent, chunkshape=1)
 	
 	image_shape = (nbSlice, nbPixel)
 	
 	columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
 	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
-	hfile.create_table(camTelGroup, 'waveformHi', description_waveform, "Table of waveform of the high gain signal")
+	hfile.create_table(camTelGroup, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", expectedrows=nbEvent, chunkshape=1)
 	
 	if nbGain > 1:
 		columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
 		description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
-		hfile.create_table(camTelGroup, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal")
+		hfile.create_table(camTelGroup, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", expectedrows=nbEvent, chunkshape=1)
 	
 	
 	columns_dict_photo_electron_image  = {"photo_electron_image": tables.Float32Col(shape=nbPixel)}
 	description_photo_electron_image = type('description columns_dict_photo_electron_image', (tables.IsDescription,), columns_dict_photo_electron_image)
-	hfile.create_table(camTelGroup, 'photo_electron_image', description_photo_electron_image, "Table of real signal in the camera (for simulation only)")
+	hfile.create_table(camTelGroup, 'photo_electron_image', description_photo_electron_image, "Table of real signal in the camera (for simulation only)", expectedrows=nbEvent, chunkshape=1)
 	
 	ped_shape = (nbGain, nbPixel)
 	columns_dict_pedestal = {
@@ -89,7 +91,7 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 		"pedestal" :  tables.Float32Col(shape=ped_shape)
 	}
 	description_pedestal = type('description columns_dict_pedestal', (tables.IsDescription,), columns_dict_pedestal)
-	tablePedestal = hfile.create_table(camTelGroup, 'pedestal', description_pedestal, "Table of the pedestal for high and low gain", expectedrows=1)
+	tablePedestal = hfile.create_table(camTelGroup, 'pedestal', description_pedestal, "Table of the pedestal for high and low gain", expectedrows=1, chunkshape=1)
 	
 	if infoTabPed is not None:
 		tabPedForEntry = tablePedestal.row
