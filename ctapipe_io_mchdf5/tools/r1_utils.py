@@ -21,7 +21,7 @@ class TriggerInfo(tables.IsDescription):
 	obs_id = tables.UInt64Col()
 
 
-def createTelGroupAndTable(hfile, telId, telInfo):
+def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 	'''
 	Create the telescope group and table
 	It is important not to add an other dataset with the type of the camera to simplify the serach of a telescope by telescope index in the file structure
@@ -66,23 +66,23 @@ def createTelGroupAndTable(hfile, telId, telInfo):
 	if infoTabGain is not None:
 		hfile.create_array(camTelGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
 	
-	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events", expectedrows=nbEvent, chunkshape=1)
+	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events", chunkshape=chunkshape)
 	
 	image_shape = (nbSlice, nbPixel)
 	
 	columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
 	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
-	hfile.create_table(camTelGroup, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", expectedrows=nbEvent, chunkshape=1)
+	hfile.create_table(camTelGroup, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", chunkshape=chunkshape)
 	
 	if nbGain > 1:
 		columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
 		description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
-		hfile.create_table(camTelGroup, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", expectedrows=nbEvent, chunkshape=1)
+		hfile.create_table(camTelGroup, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", chunkshape=chunkshape)
 	
 	
 	columns_dict_photo_electron_image  = {"photo_electron_image": tables.Float32Col(shape=nbPixel)}
 	description_photo_electron_image = type('description columns_dict_photo_electron_image', (tables.IsDescription,), columns_dict_photo_electron_image)
-	hfile.create_table(camTelGroup, 'photo_electron_image', description_photo_electron_image, "Table of real signal in the camera (for simulation only)", expectedrows=nbEvent, chunkshape=1)
+	hfile.create_table(camTelGroup, 'photo_electron_image', description_photo_electron_image, "Table of real signal in the camera (for simulation only)", chunkshape=chunkshape)
 	
 	ped_shape = (nbGain, nbPixel)
 	columns_dict_pedestal = {
@@ -173,4 +173,20 @@ def appendEventTelescopeData(hfile, event):
 		photo_electron_image = event.mc.tel[telId].photo_electron_image
 		appendWaveformInTelescope(telNode, waveform, photo_electron_image, event.r0.event_id, event.trig.gps_time.value)
 
+
+def flushR1Tables(hfile):
+	'''
+	Flush all the R1 tables
+	Parameters:
+		hfile : file to be used
+	'''
+	for telNode in hfile.walk_nodes("/r1", "Group"):
+		try:
+			nbGain = np.uint64(telNode.nbGain.read())
+			telNode.photo_electron_image.flush()
+			telNode.waveformHi.flush()
+			if nbGain > 1:
+				telNode.waveformLo.flush()
+		except Exception as e:
+			pass
 

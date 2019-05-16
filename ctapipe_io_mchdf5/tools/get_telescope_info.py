@@ -32,16 +32,17 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 		max_nb_tel : maximum number of telescope in the simulation
 	Return:
 	-------
-		dictionnnary which contains the telescope informations (ref_shape, nb_slice, ped, gain) with telescope id as key
+		tuple of (dictionnnary which contains the telescope informations (ref_shape, nb_slice, ped, gain) with telescope id as key, and the number of events in the file
 	'''
 	telescope_info = dict() # Key is tel id, value (ref_shape, slice, ped, gain, telType, focalLen, tabPixelX, tabPixelY, nbMirror)
-	
+	nbEvent = 0
 	with event_source(inputFileName) as source:
 		dicoTelInfo = None
 		posTelX = None
 		posTelY = None
 		posTelZ = None
 		for evt in source:
+			nbEvent += 1
 			if dicoTelInfo is None:
 				dicoTelInfo = evt.inst.subarray.tel
 				posTelX = np.asarray(evt.inst.subarray.tel_coords.x, dtype=np.float32)
@@ -75,9 +76,7 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 									telX, telY, telZ, nbMirrorTiles, mirrorArea, nbGain, nbPixel, 0]
 				else:
 					telescope_info[tel_id][TELINFO_NBEVENT] += 1
-			#if len(telescope_info) >= max_nb_tel:
-				#return telescope_info
-	return telescope_info
+	return telescope_info, nbEvent
 
 
 def checkIsSimulationFile(telInfo_from_evt):

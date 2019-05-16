@@ -32,26 +32,6 @@ def createFileStructure(hfile, telInfo_from_evt):
 	return tableMcEvent
 
 
-def flushR1Tables(hfile):
-	'''
-	Flush all the R1 tables
-	Parameters:
-		hfile : file to be used
-	'''
-	for telNode in hfile.walk_nodes("/r1", "Group"):
-		try:
-			nbGain = np.uint64(telNode.nbGain.read())
-			telNode.photo_electron_image.flush()
-			telNode.waveformHi.flush()
-			if nbGain > 1:
-				telNode.waveformLo.flush()
-			
-			
-		except Exception as e:
-			print(e)
-	
-
-
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-i', '--input', help="simtel r1 input file",
@@ -69,11 +49,11 @@ def main():
 	#Increase the number of nodes in cache if necessary (avoid warning about nodes reopening)
 	tables.parameters.NODE_CACHE_SLOTS = max(tables.parameters.NODE_CACHE_SLOTS, 3*nbTel + 20)
 	
-	telInfo_from_evt = getTelescopeInfoFromEvent(inputFileName, nbTel)
-	
-	#zstdFilter = tables.Filters(complevel=6, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
+	telInfo_from_evt, nbEvent = getTelescopeInfoFromEvent(inputFileName, nbTel)
+	print("Found",nbEvent, "events")
+	zstdFilter = tables.Filters(complevel=6, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
 	hfile = tables.open_file(args.output, mode = "w"
-			  #, filters=zstdFilter
+			  , filters=zstdFilter
 			  )
 	
 	hfile.title = "R1-V2"
@@ -99,6 +79,8 @@ def main():
 	max_event = 10000000
 	if args.max_event != None:
 		max_event = int(args.max_event)
+	else:
+		max_event = nbEvent
 	print("\n")
 	for event in source:
 		if isSimulationMode:

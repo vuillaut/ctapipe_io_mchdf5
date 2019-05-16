@@ -11,9 +11,17 @@ Installation
   $ python setup.py install
 ```
 
-Simtel file conversion
-======================
+Simtel file conversion to data format V1
+========================================
 
 ```sh
-  $ simtel2hdf5 -i inputFile.simtel.gz -o outputFile.h5
+  $ simtel2hdf5v1 -i inputFile.simtel.gz -o outputFile.h5
+```
+
+
+Simtel file conversion to data format V2
+========================================
+
+```sh
+  $ simtel2hdf5v2 -i inputFile.simtel.gz -o outputFile.h5
 ```
