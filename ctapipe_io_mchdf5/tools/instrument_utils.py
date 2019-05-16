@@ -51,33 +51,51 @@ class OpticDescription(tables.IsDescription):
 	equivalent_focal_length = tables.Float32Col(shape=(), dflt=0.0, pos=6)
 
 
-def fillSubarrayLayout(hfile, telInfo_from_evt):
+def fillSubarrayLayout(hfile, telInfo_from_evt, nbTel):
 	'''
 	Fill the subarray informations
 	Parameters:
 	-----------
 		hfile : HDF5 file to be used
 		telInfo_from_evt : information of telescopes
+		nbTel : number of telescope in the run
 	'''
 	tableSubarrayLayout = hfile.root.instrument.subarray.layout
 	tabSubLayout = tableSubarrayLayout.row
-	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
-		telType = telInfo[TELINFO_TELTYPE]
-		camName = getCameraNameFromType(telType)
-		telTypeStr = getTelescopeTypeStrFromCameraType(telType)
-		
-		tabSubLayout["tel_id"] = np.uint64(telId)
-		tabSubLayout["pos_x"] = np.float32(telInfo[TELINFO_TELPOSX])
-		tabSubLayout["pos_y"] = np.float32(telInfo[TELINFO_TELPOSY])
-		tabSubLayout["pos_z"] = np.float32(telInfo[TELINFO_TELPOSZ])
-		tabSubLayout["name"] = camName
-		tabSubLayout["type"] = telTypeStr
-		tabSubLayout["type_id"] = np.uint64(telType)
-		
-		tabSubLayout["num_mirrors"] = np.uint64(telInfo[TELINFO_NBMIRROR])
-		tabSubLayout["camera_type"] = camName + "Cam"
-		tabSubLayout["tel_description"] = "Description"
-		tabSubLayout.append()
+	
+	for telIndexIter in range(0, nbTel):
+		telId = telIndexIter + 1
+		if telId in telInfo_from_evt:
+			telInfo = telInfo_from_evt[telId]
+			telType = telInfo[TELINFO_TELTYPE]
+			camName = getCameraNameFromType(telType)
+			telTypeStr = getTelescopeTypeStrFromCameraType(telType)
+			
+			tabSubLayout["tel_id"] = np.uint64(telId)
+			tabSubLayout["pos_x"] = np.float32(telInfo[TELINFO_TELPOSX])
+			tabSubLayout["pos_y"] = np.float32(telInfo[TELINFO_TELPOSY])
+			tabSubLayout["pos_z"] = np.float32(telInfo[TELINFO_TELPOSZ])
+			tabSubLayout["name"] = camName
+			tabSubLayout["type"] = telTypeStr
+			tabSubLayout["type_id"] = np.uint64(telType)
+			
+			tabSubLayout["num_mirrors"] = np.uint64(telInfo[TELINFO_NBMIRROR])
+			tabSubLayout["camera_type"] = camName + "Cam"
+			tabSubLayout["tel_description"] = "Description"
+			tabSubLayout.append()
+		else:
+			tabSubLayout["tel_id"] = np.uint64(telId)
+			tabSubLayout["pos_x"] = np.float32(0.0)
+			tabSubLayout["pos_y"] = np.float32(0.0)
+			tabSubLayout["pos_z"] = np.float32(0.0)
+			tabSubLayout["name"] = ""
+			tabSubLayout["type"] = ""
+			tabSubLayout["type_id"] = np.uint64(7)
+			
+			tabSubLayout["num_mirrors"] = np.uint64(0)
+			tabSubLayout["camera_type"] = ""
+			tabSubLayout["tel_description"] = ""
+			tabSubLayout.append()
 	tableSubarrayLayout.flush()
 
 
@@ -131,31 +149,44 @@ def createInstrumentDataset(hfile, telInfo_from_evt):
 	hfile.create_table(subarrayTelescopeGroup, 'optics', OpticDescription, "Describe the optic of the all the telescopes")
 
 
-def fillOpticDescription(hfile, telInfo_from_evt):
+def fillOpticDescription(hfile, telInfo_from_evt, nbTel):
 	'''
 	Fill the optic description table
 	Parameters:
 	-----------
 		hfile : HDF5 file to be used
 		telInfo_from_evt : information of telescopes
+		nbTel : number of telescope in the run
 	'''
 	
 	tableOptic = hfile.root.instrument.subarray.telescope.optics
 	tabOp = tableOptic.row
-	for telIndex, (telId, telInfo) in enumerate(telInfo_from_evt.items()):
-		telType = telInfo[TELINFO_TELTYPE]
-		
-		camName = getCameraNameFromType(telType)
-		telTypeStr = getTelescopeTypeStrFromCameraType(telType)
-		
-		tabOp["description"] = "Description"
-		tabOp["name"] = camName
-		tabOp["type"] = telTypeStr
-		tabOp["mirror_area"] = np.float32(telInfo[TELINFO_MIRRORAREA])
-		tabOp["num_mirrors"] = np.float32(telInfo[TELINFO_NBMIRROR])
-		tabOp["num_mirror_tiles"] = np.float32(telInfo[TELINFO_NBMIRRORTILES])
-		tabOp["equivalent_focal_length"] = np.float32(telInfo[TELINFO_FOCLEN])
-		tabOp.append()
+	for telIndexIter in range(0, nbTel):
+		telId = telIndexIter + 1
+		if telId in telInfo_from_evt:
+			telInfo = telInfo_from_evt[telId]
+			telType = telInfo[TELINFO_TELTYPE]
+			
+			camName = getCameraNameFromType(telType)
+			telTypeStr = getTelescopeTypeStrFromCameraType(telType)
+			
+			tabOp["description"] = "Description"
+			tabOp["name"] = camName
+			tabOp["type"] = telTypeStr
+			tabOp["mirror_area"] = np.float32(telInfo[TELINFO_MIRRORAREA])
+			tabOp["num_mirrors"] = np.float32(telInfo[TELINFO_NBMIRROR])
+			tabOp["num_mirror_tiles"] = np.float32(telInfo[TELINFO_NBMIRRORTILES])
+			tabOp["equivalent_focal_length"] = np.float32(telInfo[TELINFO_FOCLEN])
+			tabOp.append()
+		else:
+			tabOp["description"] = ""
+			tabOp["name"] = ""
+			tabOp["type"] = ""
+			tabOp["mirror_area"] = np.float32(0.0)
+			tabOp["num_mirrors"] = np.float32(0.0)
+			tabOp["num_mirror_tiles"] = np.float32(0.0)
+			tabOp["equivalent_focal_length"] = np.float32(1.0)
+			tabOp.append()
 
 
 

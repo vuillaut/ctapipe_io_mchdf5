@@ -62,13 +62,13 @@ def main():
 	tableMcCorsikaEvent = createFileStructure(hfile, telInfo_from_evt)
 	
 	print('Fill the subarray layout informations')
-	fillSubarrayLayout(hfile, telInfo_from_evt)
+	fillSubarrayLayout(hfile, telInfo_from_evt, nbTel)
 	
 	isSimulationMode = checkIsSimulationFile(telInfo_from_evt)
 	
 	if isSimulationMode:
 		print('Fill the optic description of the telescopes')
-		fillOpticDescription(hfile, telInfo_from_evt)
+		fillOpticDescription(hfile, telInfo_from_evt, nbTel)
 		
 		print('Fill the simulation header informations')
 		fillSimulationHeaderInfo(hfile, inputFileName)
