@@ -14,7 +14,8 @@ def createTelescopeMinSelectionNode(outFile, telNode):
 		telNode : telescope node to be copied
 	'''
 	telGroupName = telNode._v_name
-	camTelGroup = hfile.create_group("/r1", telGroupName, 'Data of telescopes '+telGroupName)
+	print("createTelescopeMinSelectionNode : telGroupName =",telGroupName)
+	camTelGroup = outFile.create_group("/r1", telGroupName, 'Data of telescopes '+telGroupName)
 	
 	outFile.copy_node(telNode.nbPixel, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.nbSlice, newparent=camTelGroup, recursive=True)
@@ -54,6 +55,7 @@ def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin):
 		inFile : input file
 		nbEventPerMin : number of events to be used to compute one minimum
 	'''
+	outFile.create_group("/", 'r1', 'Raw data waveform informations of the run')
 	for telNode in inFile.walk_nodes("/r1", "Group"):
 		createTelescopeMinSelectionNode(outFile, telNode)
 
@@ -73,7 +75,6 @@ def processMinSelection(inputFileName, outputFileName, nbEventPerMin):
 	#Copy the instrument and simulation groups
 	outFile.copy_node(inFile.root.instrument, newparent=outFile.root, recursive=True)
 	outFile.copy_node(inFile.root.simulation, newparent=outFile.root, recursive=True)
-	outFile.copy_node(inFile.root.r1, newparent=outFile.root, recursive=True)
 	
 	createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin)
 	
