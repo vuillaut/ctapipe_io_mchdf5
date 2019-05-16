@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import tables
-import numbers
 import numpy as np
 from tables import open_file
 from ctapipe.io import event_source

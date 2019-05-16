@@ -2,6 +2,8 @@
 import tables
 import numpy as np
 
+from ctapipe.io import event_source
+
 class RunConfigEvent(tables.IsDescription):
 	'''
 	Configuration of the simulated events

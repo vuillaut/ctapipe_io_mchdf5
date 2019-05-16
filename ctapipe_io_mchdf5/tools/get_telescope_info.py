@@ -1,6 +1,10 @@
 
 import numpy as np
 
+from ctapipe.io import event_source
+
+from .camera_tel_type import getCameraTypeFromName, getCameraNameFromType, getTelescopeTypeStrFromCameraType
+
 TELINFO_REFSHAPE = 0
 TELINFO_NBSLICE = 1
 TELINFO_PEDESTAL = 2

@@ -98,7 +98,7 @@ def createCameraTable(hfile, telId, telInfo):
 	hfile.create_array(camTelGroup, 'pix_y', pix_y, "Position of the pixels on the Y axis of the camera in meters")
 	
 	#You can get it direcly from telInfo if you complete the field
-	pix_id = np.arange(0, pix_y.size, dtype=nb.uint64)
+	pix_id = np.arange(0, pix_y.size, dtype=np.uint64)
 	hfile.create_array(camTelGroup, 'pix_id', pix_id, "Id of the pixels of the camera")
 	
 	pix_area = np.float32(0.0)

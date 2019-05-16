@@ -1,4 +1,6 @@
 
+from ctapipe.io import event_source
+
 def getNbTel(inputFileName):
 	'''
 	Get the number of telescope in the simulation file
