@@ -56,6 +56,7 @@ def main():
 	hfile = tables.open_file(args.output, mode = "w"
 			  #, filters=zstdFilter
 			  )
+	hfile.title = "R1-V2"
 	
 	print('Create file structure')
 	tableMcCorsikaEvent = createFileStructure(hfile, telInfo_from_evt)
