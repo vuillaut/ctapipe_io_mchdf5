@@ -18,7 +18,7 @@ def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
 		telNodeIn : telescope from input file
 		nbEventPerMin : number of events to be used to compute one minimum
 	'''
-	
+	#Get the minimum with numpy min function
 	
 
 
