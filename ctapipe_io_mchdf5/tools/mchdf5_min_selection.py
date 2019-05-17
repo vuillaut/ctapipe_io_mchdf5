@@ -71,7 +71,7 @@ def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
 	
 	try:
 		processMinSelectionChannel(telNodeOut.waveformMinLo, "waveformMinLo", telNodeOut.minLo, "minLo", telNodeIn.waveformLo, "waveformLo", nbEventPerMin)
-	except tables.exceptions.NoSuchNodeError as e:
+	except Exception as e:
 		pass
 
 
