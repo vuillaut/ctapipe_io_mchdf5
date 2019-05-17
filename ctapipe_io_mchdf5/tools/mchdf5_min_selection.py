@@ -111,7 +111,7 @@ def main():
 	parser.add_argument('-o', '--output', help="hdf5 r1 v2 output file",
 						required=True)
 	parser.add_argument('-n', '--nbeventpermin', help="Number of event to be used to compute the minimum",
-						required=False, type=int)
+						required=True, type=int)
 	args = parser.parse_args()
 
 	inputFileName = args.input
