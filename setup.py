@@ -20,14 +20,14 @@ setup(
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	entry_points = entry_points,
-	#install_requires=[
-		#'numpy>=1.14.0', 
-		#'tables>=3.4.4',
-		#'ctapipe',
-		#'ctapipe-extra',
-		#'pytest-cov'
-	#],
-	#setup_requires=['pytest_runner'],
+	install_requires=[
+		'numpy>=1.14.0', 
+		'tables>=3.4.4',
+		'ctapipe',
+		'ctapipe-extra',
+		'pytest-cov'
+	],
+	setup_requires=['pytest_runner'],
 	package_data={
 		'ctapipe_io_mchdf5': [
 			'tests/resources/*'
