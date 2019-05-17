@@ -70,7 +70,7 @@ def createTelescopeMinSelectionNode(outFile, telNode, chunkshape=1):
 		createMinWaveformTable(outFile, camTelGroup, "waveformMinLo", "minLo", nbSlice, nbPixel, chunkshape=chunkshape)
 
 
-def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin):
+def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin, chunkshape=1):
 	'''
 	Create all the telescope with the minimum selection
 	Parameters:
@@ -78,16 +78,17 @@ def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin):
 		outFile : output file
 		inFile : input file
 		nbEventPerMin : number of events to be used to compute one minimum
+		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
 	'''
 	outFile.create_group("/", 'r1', 'Raw data waveform informations of the run')
 	for telNode in inFile.walk_nodes("/r1", "Group"):
 		try:
-			createTelescopeMinSelectionNode(outFile, telNode)
+			createTelescopeMinSelectionNode(outFile, telNode, chunkshape=chunkshape)
 		except Exception as e:
 			print(e)
 
 
-def processMinSelection(inputFileName, outputFileName, nbEventPerMin):
+def processMinSelection(inputFileName, outputFileName, nbEventPerMin, chunkshape=1):
 	'''
 	Process the minimum selection
 	Parameters:
@@ -95,6 +96,7 @@ def processMinSelection(inputFileName, outputFileName, nbEventPerMin):
 		inputFileName : name of the input file
 		outputFileName : name of the output file
 		nbEventPerMin : number of events to be used to compute one minimum
+		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
 	'''
 	inFile = tables.open_file(inputFileName, "r")
 	outFile = tables.open_file(outputFileName, "w", filters=inFile.filters)
@@ -103,7 +105,7 @@ def processMinSelection(inputFileName, outputFileName, nbEventPerMin):
 	outFile.copy_node(inFile.root.instrument, newparent=outFile.root, recursive=True)
 	outFile.copy_node(inFile.root.simulation, newparent=outFile.root, recursive=True)
 	
-	createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin)
+	createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin, chunkshape=chunkshape)
 	
 	inFile.close()
 	outFile.close()
