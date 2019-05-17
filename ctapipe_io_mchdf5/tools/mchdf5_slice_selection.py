@@ -3,6 +3,7 @@ import tables
 import numpy as np
 import argparse
 
+from .telescope_copy import copyTelescopeWithoutWaveform
 
 def createMWaveformTable(hfile, camTelGroup, nameWaveformHi, nbSlice, nbPixel, chunkshape=1):
 	'''
@@ -42,7 +43,7 @@ def createTelescopeSliceSelectionNode(outFile, telNode, nbSlice, chunkshape=1):
 		createMWaveformTable(outFile, camTelGroup, "waveformLo", nbSlice, nbPixel, chunkshape=chunkshape)
 
 
-def createAllTelescopeMinSelected(outFile, inFile, firstSliceIndex, lastSliceIndex, chunkshape=1):
+def createAllTelescopeMinSelected(outFile, inFile, nbSlice, chunkshape=1):
 	'''
 	Create all the telescope with the minimum selection
 	Parameters:
@@ -111,7 +112,6 @@ def copySelectedSlicesR1(outFile, inFile, firstSliceIndex, lastSliceIndex):
 		firstSliceIndex : Index of the first slice to be selected
 		lastSliceIndex : Index of the last slice no to be selected
 	'''
-	outFile.create_group("/", 'r1', 'Raw data waveform informations of the run')
 	for telNodeIn, telNodeOut in zip(inFile.walk_nodes("/r1", "Group"), outFile.walk_nodes("/r1", "Group")):
 		try:
 			copySelectedSlicesTelescope(telNodeOut, telNodeIn, firstSliceIndex, lastSliceIndex)
