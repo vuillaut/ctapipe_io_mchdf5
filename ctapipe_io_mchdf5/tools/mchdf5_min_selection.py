@@ -139,7 +139,6 @@ def main():
 	processMinSelection(inputFileName, outputFileName, nbEventPerMin)
 
 
-if __name__ == '__main__':
-	main()
+
 
 
