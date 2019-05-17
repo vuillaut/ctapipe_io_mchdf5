@@ -4,7 +4,30 @@ import numpy as np
 import argparse
 
 
-def createTelescopeMinSelectionNode(outFile, telNode):
+def createMinWaveformTable(hfile, camTelGroup, nameWaveformMinHi, nameMinHi, nbSlice, nbPixel, chunkshape=1):
+	'''
+	Create the table to store the signal without the minimum value and it minimum in an other table
+	Parameters:
+		hfile : HDF5 file to be used
+		camTelGroup : telescope group in which to put the tables 
+		nameWaveformMinHi : name of the table to store the waveform without minimum value
+		nameMinHi : name of the table to store the minimum value of the waveform
+		nbSlice : number of slices of the signal
+		nbPixel : number of pixels of the camera
+		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
+	'''
+	image_shape = (nbSlice, nbPixel)
+	columns_dict_waveformMinHi  = {nameWaveformMinHi: tables.UInt16Col(shape=image_shape)}
+	description_waveformMinHi = type('description columns_dict_waveformMinHi', (tables.IsDescription,), columns_dict_waveformMinHi)
+	hfile.create_table(camTelGroup, nameWaveformMinHi, description_waveformMinHi, "Table of waveform of the signal without the minimum value", chunkshape=chunkshape)
+	
+	columns_dict_minHi  = {nameMinHi: tables.UInt16Col(shape=nbPixel)}
+	description_waveformMinHi = type('description columns_dict_minHi', (tables.IsDescription,), columns_dict_minHi)
+	hfile.create_table(camTelGroup, nameMinHi, description_waveformMinHi, "Table of the minimum values of the waveform of the signal", chunkshape=chunkshape)
+	
+
+
+def createTelescopeMinSelectionNode(outFile, telNode, chunkshape=1):
 	'''
 	Create the telescope group and table
 	It is important not to add an other dataset with the type of the camera to simplify the serach of a telescope by telescope index in the file structure
@@ -12,6 +35,7 @@ def createTelescopeMinSelectionNode(outFile, telNode):
 	-----------
 		outFile : HDF5 file to be used
 		telNode : telescope node to be copied
+		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
 	'''
 	telGroupName = telNode._v_name
 	print("createTelescopeMinSelectionNode : telGroupName =",telGroupName)
@@ -36,14 +60,14 @@ def createTelescopeMinSelectionNode(outFile, telNode):
 	outFile.copy_node(telNode.pedestal, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.photo_electron_image, newparent=camTelGroup, recursive=True)
 	
-	#columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
-	#description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
-	#hfile.create_table(camTelGroup, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", chunkshape=chunkshape)
+	nbPixel = np.uint64(telNode.nbPixel.read())
+	nbSlice = np.uint64(telNode.nbSlice.read())
 	
-	#if nbGain > 1:
-		#columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
-		#description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
-		#hfile.create_table(camTelGroup, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", chunkshape=chunkshape)
+	createMinWaveformTable(outFile, camTelGroup, "waveformMinHi", "minHi", nbSlice, nbPixel, chunkshape=chunkshape)
+	
+	nbGain = np.uint64(telNode.nbGain.read())
+	if nbGain > 1:
+		createMinWaveformTable(outFile, camTelGroup, "waveformMinLo", "minLo", nbSlice, nbPixel, chunkshape=chunkshape)
 
 
 def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin):
