@@ -1,7 +1,7 @@
 
 import tables
 import numpy as np
-from telescope_copy import copyTelescopeWithoutWaveform
+from .telescope_copy import copyTelescopeWithoutWaveform
 
 def createMinWaveformTable(hfile, camTelGroup, nameWaveformMinHi, nameMinHi, nbSlice, nbPixel, chunkshape=1):
 	'''

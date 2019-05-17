@@ -3,10 +3,7 @@ import tables
 import numpy as np
 import argparse
 
-if __name__ == '__main__':
-	from min_selection_utils import createAllTelescopeMinSelected
-else:
-	from .min_selection_utils import createAllTelescopeMinSelected
+from .min_selection_utils import createAllTelescopeMinSelected
 
 
 def processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, tabWaveformPart):
@@ -40,15 +37,25 @@ def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMi
 	waveformHi = waveformHi[keyWaveform]
 	
 	nbEvent = waveformHi.shape[0]
-	nbMinStep = int(nbEvent/nbEventPerMin)
-	lastPosition = nbMinStep*nbEventPerMin
-	lastminValue = nbEvent - lastPosition
+	
+	if nbEvent == 0:
+		return
+	elif nbEvent >= nbEventPerMin:
+		nbMinStep = int(nbEvent/nbEventPerMin)
+		lastPosition = nbMinStep*nbEventPerMin
+		lastminValue = nbEvent - lastPosition
+		lastPosition -= 1
+		_nbEventPerMin = nbEventPerMin
+	else:
+		nbMinStep = 1
+		lastminValue = 0
+		_nbEventPerMin = nbEvent
 	
 	tabWaveformMin = tableWaveformMin.row
 	tabMin = tableMin.row
 	print("\n")
 	for i in range(0, nbMinStep):
-		processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[i:i + nbEventPerMin])
+		processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[i:i + _nbEventPerMin])
 		print("\r\r\r\r\r\r\r\r\r\r\r\r",i,"/",nbMinStep, end="")
 	
 	if lastminValue != 0:
