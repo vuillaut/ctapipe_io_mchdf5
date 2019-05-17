@@ -9,6 +9,43 @@ else:
 	from .min_selection_utils import createAllTelescopeMinSelected
 
 
+def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMin, waveformInput, keyWaveform):
+	'''
+	Process the minimum pixel split on a channel
+	Parameters:
+		tableWaveformMin : table of waveform substracted by their minimum values
+		keyWaveformMin : key to get the data into the tableWaveformMin table
+		tableMin : table of the minimum values of the waveform
+		keyMin : key to get the data into the tableMin table
+		waveformInput : input waveform signal table for a channel
+		keyWaveform : key to access the data into the waveformInput channel
+	'''
+	waveformHi = waveformInput.read()
+	waveformHi = waveformHi[keyWaveform]
+	
+	nbEvent = waveformHi.shape[0]
+	nbMinStep = int(nbEvent/nbEventPerMin)
+	lastminValue = nbEvent - nbMinStep*nbEventPerMin
+	
+	tabWaveformMin = tableWaveformMin.row
+	tabMin = tableMin.row
+	for i in range(0, nbMinStep):
+		tabWaveformPart = waveformHi[i:i + nbEventPerMin]
+		tabPixelMin = tabWaveformPart.min(axis=0)
+		
+		tabSubtractWaveformMin = tabWaveformPart - tabPixelMin
+		
+		tableMin[keyMin] = tabPixelMin
+		tableMin.append()
+		
+		for subtractedSignal in tabSubtractWaveformMin:
+			tabWaveformMin[keyWaveformMin] = subtractedSignal
+			tabWaveformMin.append()
+	
+	tableWaveformMin.flush()
+	tableMin.flush()
+
+
 def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
 	'''
 	Split the signal in minimum values and signal without minimum values
@@ -19,7 +56,12 @@ def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
 		nbEventPerMin : number of events to be used to compute one minimum
 	'''
 	#Get the minimum with numpy min function
+	processMinSelectionChannel(telNodeOut.waveformMinHi, "waveformMinHi", telNodeOut.minHi, "minHi", telNodeIn.waveformHi, "waveformHi")
 	
+	try:
+		processMinSelectionChannel(telNodeOut.waveformMinLo, "waveformMinLo", telNodeOut.minLo, "minLo", telNodeIn.waveformLo, "waveformLo")
+	except Exception as e:
+		print(e)
 
 
 def processMinSelectionAllTelescope(outFile, inFile, nbEventPerMin):
