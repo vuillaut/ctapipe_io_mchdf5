@@ -97,7 +97,7 @@ def copySelectedSlicesTelescope(telNodeOut, telNodeIn, firstSliceIndex, lastSlic
 	'''
 	selectSliceChannel(telNodeOut.waveformHi, telNodeIn.waveformHi, "waveformHi", firstSliceIndex, lastSliceIndex)
 	try:
-		selectSliceChannel(telNodeOut.waveformHi, telNodeIn.waveformHi, "waveformHi", firstSliceIndex, lastSliceIndex)
+		selectSliceChannel(telNodeOut.waveformLo, telNodeIn.waveformLo, "waveformLo", firstSliceIndex, lastSliceIndex)
 	except Exception as e:
 		print(e)
 
@@ -142,8 +142,8 @@ def processSliceSelectionFile(inputFileName, outputFileName, firstSliceIndex, la
 	nbSlice = lastSliceIndex - firstSliceIndex
 	createAllTelescopeMinSelected(outFile, inFile, nbSlice, chunkshape=chunkshape)
 	copySelectedSlicesR1(outFile, inFile, firstSliceIndex, lastSliceIndex)
-	
-	
+	inFile.close()
+	outFile.close()
 
 
 def main():
