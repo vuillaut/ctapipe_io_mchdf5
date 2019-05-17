@@ -9,6 +9,35 @@ else:
 	from .min_selection_utils import createAllTelescopeMinSelected
 
 
+def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
+	'''
+	Split the signal in minimum values and signal without minimum values
+	Parameters:
+	-----------
+		telNodeOut : telescope from output file
+		telNodeIn : telescope from input file
+		nbEventPerMin : number of events to be used to compute one minimum
+	'''
+	
+	
+
+
+def processMinSelectionAllTelescope(outFile, inFile, nbEventPerMin):
+	'''
+	Split the signal in minimum values and signal without minimum values for all telescopes
+	Parameters:
+	-----------
+		outFile : output file
+		inFile : input file
+		nbEventPerMin : number of events to be used to compute one minimum
+	'''
+	for telNodeIn, telNodeOut in zip(inFile.walk_nodes("/r1", "Group"), outFile.walk_nodes("/r1", "Group")):
+		try:
+			processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin)
+		except Exception as e:
+			print(e)
+
+
 def processMinSelection(inputFileName, outputFileName, nbEventPerMin, chunkshape=1):
 	'''
 	Process the minimum selection
@@ -27,6 +56,7 @@ def processMinSelection(inputFileName, outputFileName, nbEventPerMin, chunkshape
 	outFile.copy_node(inFile.root.simulation, newparent=outFile.root, recursive=True)
 	
 	createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin, chunkshape=chunkshape)
+	processMinSelectionAllTelescope(outFile, inFile, nbEventPerMin)
 	
 	inFile.close()
 	outFile.close()
