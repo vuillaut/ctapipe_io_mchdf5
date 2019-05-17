@@ -113,8 +113,14 @@ def processMinSelection(inputFileName, outputFileName, nbEventPerMin, chunkshape
 	outFile = tables.open_file(outputFileName, "w", filters=inFile.filters)
 	
 	#Copy the instrument and simulation groups
-	outFile.copy_node(inFile.root.instrument, newparent=outFile.root, recursive=True)
-	outFile.copy_node(inFile.root.simulation, newparent=outFile.root, recursive=True)
+	try:
+		outFile.copy_node(inFile.root.instrument, newparent=outFile.root, recursive=True)
+	except:
+		pass
+	try:
+		outFile.copy_node(inFile.root.simulation, newparent=outFile.root, recursive=True)
+	except:
+		pass
 	
 	createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin, chunkshape=chunkshape)
 	processMinSelectionAllTelescope(outFile, inFile, nbEventPerMin)
