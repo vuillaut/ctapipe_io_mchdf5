@@ -46,13 +46,15 @@ def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMi
 	
 	tabWaveformMin = tableWaveformMin.row
 	tabMin = tableMin.row
+	print("\n")
 	for i in range(0, nbMinStep):
 		processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[i:i + nbEventPerMin])
-		print("\r\r\r\r\r\r\r\r\r\r\r\r",i,"/",nbMinStep)
+		print("\r\r\r\r\r\r\r\r\r\r\r\r",i,"/",nbMinStep, end="")
 	
 	processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[lastPosition:-1])
 	tableWaveformMin.flush()
 	tableMin.flush()
+	print("\nDone for",keyWaveformMin)
 
 
 def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
