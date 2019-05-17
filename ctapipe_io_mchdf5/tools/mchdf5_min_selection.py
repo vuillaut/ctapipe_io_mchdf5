@@ -9,6 +9,22 @@ else:
 	from .min_selection_utils import createAllTelescopeMinSelected
 
 
+def processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, tabWaveformPart):
+	'''
+	Get the minimum and waveform without minimum and append them in the output tables (block par block function)
+	'''
+	tabPixelMin = tabWaveformPart.min(axis=(0,1))
+	
+	tabSubtractWaveformMin = tabWaveformPart - tabPixelMin
+	
+	tabMin[keyMin] = tabPixelMin
+	tabMin.append()
+	
+	for subtractedSignal in tabSubtractWaveformMin:
+		tabWaveformMin[keyWaveformMin] = subtractedSignal
+		tabWaveformMin.append()
+
+
 def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMin, waveformInput, keyWaveform, nbEventPerMin):
 	'''
 	Process the minimum pixel split on a channel
@@ -25,23 +41,16 @@ def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMi
 	
 	nbEvent = waveformHi.shape[0]
 	nbMinStep = int(nbEvent/nbEventPerMin)
-	lastminValue = nbEvent - nbMinStep*nbEventPerMin
+	lastPosition = nbMinStep*nbEventPerMin
+	lastminValue = nbEvent - lastPosition
 	
 	tabWaveformMin = tableWaveformMin.row
 	tabMin = tableMin.row
 	for i in range(0, nbMinStep):
-		tabWaveformPart = waveformHi[i:i + nbEventPerMin]
-		tabPixelMin = tabWaveformPart.min(axis=(0,1))
-		
-		tabSubtractWaveformMin = tabWaveformPart - tabPixelMin
-		
-		tabMin[keyMin] = tabPixelMin
-		tabMin.append()
-		
-		for subtractedSignal in tabSubtractWaveformMin:
-			tabWaveformMin[keyWaveformMin] = subtractedSignal
-			tabWaveformMin.append()
+		processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[i:i + nbEventPerMin])
+		print("\r\r\r\r\r\r\r\r\r\r\r\r",i,"/",nbMinStep)
 	
+	processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[lastPosition:-1])
 	tableWaveformMin.flush()
 	tableMin.flush()
 
