@@ -51,7 +51,8 @@ def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMi
 		processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[i:i + nbEventPerMin])
 		print("\r\r\r\r\r\r\r\r\r\r\r\r",i,"/",nbMinStep, end="")
 	
-	processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[lastPosition:-1])
+	if lastminValue != 0:
+		processMinSelectionChannelBlock(tabWaveformMin, keyWaveformMin, tabMin, keyMin, waveformHi[lastPosition:-1])
 	tableWaveformMin.flush()
 	tableMin.flush()
 	print("\nDone for",keyWaveformMin)
