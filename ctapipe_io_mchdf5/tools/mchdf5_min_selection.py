@@ -9,7 +9,7 @@ else:
 	from .min_selection_utils import createAllTelescopeMinSelected
 
 
-def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMin, waveformInput, keyWaveform):
+def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMin, waveformInput, keyWaveform, nbEventPerMin):
 	'''
 	Process the minimum pixel split on a channel
 	Parameters:
@@ -31,12 +31,12 @@ def processMinSelectionChannel(tableWaveformMin, keyWaveformMin, tableMin, keyMi
 	tabMin = tableMin.row
 	for i in range(0, nbMinStep):
 		tabWaveformPart = waveformHi[i:i + nbEventPerMin]
-		tabPixelMin = tabWaveformPart.min(axis=0)
+		tabPixelMin = tabWaveformPart.min(axis=(0,1))
 		
 		tabSubtractWaveformMin = tabWaveformPart - tabPixelMin
 		
-		tableMin[keyMin] = tabPixelMin
-		tableMin.append()
+		tabMin[keyMin] = tabPixelMin
+		tabMin.append()
 		
 		for subtractedSignal in tabSubtractWaveformMin:
 			tabWaveformMin[keyWaveformMin] = subtractedSignal
@@ -56,12 +56,12 @@ def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
 		nbEventPerMin : number of events to be used to compute one minimum
 	'''
 	#Get the minimum with numpy min function
-	processMinSelectionChannel(telNodeOut.waveformMinHi, "waveformMinHi", telNodeOut.minHi, "minHi", telNodeIn.waveformHi, "waveformHi")
+	processMinSelectionChannel(telNodeOut.waveformMinHi, "waveformMinHi", telNodeOut.minHi, "minHi", telNodeIn.waveformHi, "waveformHi", nbEventPerMin)
 	
 	try:
-		processMinSelectionChannel(telNodeOut.waveformMinLo, "waveformMinLo", telNodeOut.minLo, "minLo", telNodeIn.waveformLo, "waveformLo")
-	except Exception as e:
-		print(e)
+		processMinSelectionChannel(telNodeOut.waveformMinLo, "waveformMinLo", telNodeOut.minLo, "minLo", telNodeIn.waveformLo, "waveformLo", nbEventPerMin)
+	except tables.exceptions.NoSuchNodeError as e:
+		pass
 
 
 def processMinSelectionAllTelescope(outFile, inFile, nbEventPerMin):
@@ -76,8 +76,8 @@ def processMinSelectionAllTelescope(outFile, inFile, nbEventPerMin):
 	for telNodeIn, telNodeOut in zip(inFile.walk_nodes("/r1", "Group"), outFile.walk_nodes("/r1", "Group")):
 		try:
 			processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin)
-		except Exception as e:
-			print(e)
+		except tables.exceptions.NoSuchNodeError as e:
+			pass
 
 
 def processMinSelection(inputFileName, outputFileName, nbEventPerMin, chunkshape=1):

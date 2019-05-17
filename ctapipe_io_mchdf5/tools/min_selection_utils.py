@@ -48,11 +48,11 @@ def createTelescopeMinSelectionNode(outFile, telNode, chunkshape=1):
 	try:
 		outFile.copy_node(telNode.tabRefShape, newparent=camTelGroup, recursive=True)
 	except Exception as e:
-		print(e)
+		pass
 	try:
 		outFile.copy_node(telNode.tabGain, newparent=camTelGroup, recursive=True)
 	except Exception as e:
-		print(e)
+		pass
 		
 	outFile.copy_node(telNode.trigger, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.pedestal, newparent=camTelGroup, recursive=True)
@@ -82,8 +82,8 @@ def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin, chunkshape=1):
 	for telNode in inFile.walk_nodes("/r1", "Group"):
 		try:
 			createTelescopeMinSelectionNode(outFile, telNode, chunkshape=chunkshape)
-		except Exception as e:
-			print(e)
+		except tables.exceptions.NoSuchNodeError as e:
+			pass
 
 
 
