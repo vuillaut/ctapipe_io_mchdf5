@@ -57,7 +57,10 @@ def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin):
 	'''
 	outFile.create_group("/", 'r1', 'Raw data waveform informations of the run')
 	for telNode in inFile.walk_nodes("/r1", "Group"):
-		createTelescopeMinSelectionNode(outFile, telNode)
+		try:
+			createTelescopeMinSelectionNode(outFile, telNode)
+		except Exception as e:
+			print(e)
 
 
 def processMinSelection(inputFileName, outputFileName, nbEventPerMin):
