@@ -4,3 +4,5 @@
 	Licence : CeCILL-C
 '''
 
+from telescope_copy import *
+

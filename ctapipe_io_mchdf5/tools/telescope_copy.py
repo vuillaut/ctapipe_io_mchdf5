@@ -32,7 +32,10 @@ def copyTelescopeWithoutWaveform(outFile, telNode, chunkshape=1):
 		
 	outFile.copy_node(telNode.trigger, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.pedestal, newparent=camTelGroup, recursive=True)
-	outFile.copy_node(telNode.photo_electron_image, newparent=camTelGroup, recursive=True)
+	try:
+		outFile.copy_node(telNode.photo_electron_image, newparent=camTelGroup, recursive=True)
+	except Exception as e:
+		pass
 	return camTelGroup
 	
 
