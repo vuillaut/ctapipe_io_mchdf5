@@ -7,7 +7,6 @@ from tables import open_file
 from ctapipe.io import event_source
 import argparse
 
-from .camera_tel_type import getCameraTypeFromName, getCameraNameFromType, getTelescopeTypeStrFromCameraType
 from .get_telescope_info import *
 from .simulation_utils import *
 from .get_nb_tel import getNbTel
