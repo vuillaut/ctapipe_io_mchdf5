@@ -11,7 +11,9 @@ entry_points = {}
 entry_points['console_scripts'] = ['simtel2hdf5v1 = ctapipe_io_mchdf5.tools.simtel_2_hdf5_v1:main',
 					'simtel2hdf5v2 = ctapipe_io_mchdf5.tools.simtel_2_hdf5_v2:main',
 					'mchdf5v2minselection = ctapipe_io_mchdf5.tools.mchdf5_min_selection:main',
-					'mchdf5v2sliceselection = ctapipe_io_mchdf5.tools.mchdf5_slice_selection:main' ]
+					'mchdf5v2sliceselection = ctapipe_io_mchdf5.tools.mchdf5_slice_selection:main',
+					'mchdf5v2extractsignaltensor = ctapipe_io_mchdf5.tools.mchdf5_extract_signal_tensor:main',
+					]
 
 setup(
 	name='ctapipe_io_mchdf5',
