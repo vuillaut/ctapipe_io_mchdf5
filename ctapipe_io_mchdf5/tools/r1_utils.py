@@ -21,6 +21,26 @@ class TriggerInfo(tables.IsDescription):
 	obs_id = tables.UInt64Col()
 
 
+def createWaveformTel(hfile, telNode, nbGain, image_shape):
+	'''
+	Create the waveform tables into the given telescope node
+	Parameters:
+		hfile : HDF5 file to be used
+		telNode : telescope to be completed
+		nbGain : number of gains of the camera
+		image_shape : shape of the camera images (number of slices, number of pixels)
+	'''
+	columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
+	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
+	hfile.create_table(telNode, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", chunkshape=chunkshape)
+	
+	if nbGain > 1:
+		columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
+		description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
+		hfile.create_table(telNode, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", chunkshape=chunkshape)
+	
+
+
 def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 	'''
 	Create the telescope group and table
@@ -70,15 +90,7 @@ def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 	
 	image_shape = (nbSlice, nbPixel)
 	
-	columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
-	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
-	hfile.create_table(camTelGroup, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", chunkshape=chunkshape)
-	
-	if nbGain > 1:
-		columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
-		description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
-		hfile.create_table(camTelGroup, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", chunkshape=chunkshape)
-	
+	createWaveformTel(hfile, camTelGroup, nbGain, image_shape)
 	
 	columns_dict_photo_electron_image  = {"photo_electron_image": tables.Float32Col(shape=nbPixel)}
 	description_photo_electron_image = type('description columns_dict_photo_electron_image', (tables.IsDescription,), columns_dict_photo_electron_image)
