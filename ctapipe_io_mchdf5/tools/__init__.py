@@ -4,6 +4,6 @@
 	Licence : CeCILL-C
 '''
 
-from telescope_copy import *
-from r1_utils import *
+from .telescope_copy import *
+from .r1_utils import *
 
