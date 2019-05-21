@@ -21,7 +21,7 @@ class TriggerInfo(tables.IsDescription):
 	obs_id = tables.UInt64Col()
 
 
-def createWaveformTel(hfile, telNode, nbGain, image_shape):
+def createWaveformTel(hfile, telNode, nbGain, image_shape, chunkshape=1):
 	'''
 	Create the waveform tables into the given telescope node
 	Parameters:
@@ -29,6 +29,7 @@ def createWaveformTel(hfile, telNode, nbGain, image_shape):
 		telNode : telescope to be completed
 		nbGain : number of gains of the camera
 		image_shape : shape of the camera images (number of slices, number of pixels)
+		chunkshape : shape of the chunk to be used to store the data
 	'''
 	columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
 	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
@@ -50,6 +51,7 @@ def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 		hfile : HDF5 file to be used
 		telId : id of the telescope
 		telInfo : table of some informations related to the telescope
+		chunkshape : shape of the chunk to be used to store the data
 	'''
 	telIndex = telId - 1
 	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telId), 'Data of telescopes '+str(telId))
@@ -90,7 +92,7 @@ def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 	
 	image_shape = (nbSlice, nbPixel)
 	
-	createWaveformTel(hfile, camTelGroup, nbGain, image_shape)
+	createWaveformTel(hfile, camTelGroup, nbGain, image_shape, chunkshape=chunkshape)
 	
 	columns_dict_photo_electron_image  = {"photo_electron_image": tables.Float32Col(shape=nbPixel)}
 	description_photo_electron_image = type('description columns_dict_photo_electron_image', (tables.IsDescription,), columns_dict_photo_electron_image)
