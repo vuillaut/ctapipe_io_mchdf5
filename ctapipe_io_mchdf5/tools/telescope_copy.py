@@ -1,4 +1,5 @@
 
+import tables
 
 def copyTelescopeWithoutWaveform(outFile, telNode, chunkshape=1):
 	'''
@@ -23,18 +24,18 @@ def copyTelescopeWithoutWaveform(outFile, telNode, chunkshape=1):
 	outFile.copy_node(telNode.telId, newparent=camTelGroup, recursive=True)
 	try:
 		outFile.copy_node(telNode.tabRefShape, newparent=camTelGroup, recursive=True)
-	except Exception as e:
+	except tables.exceptions.NoSuchNodeError as e:
 		pass
 	try:
 		outFile.copy_node(telNode.tabGain, newparent=camTelGroup, recursive=True)
-	except Exception as e:
+	except tables.exceptions.NoSuchNodeError as e:
 		pass
 		
 	outFile.copy_node(telNode.trigger, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.pedestal, newparent=camTelGroup, recursive=True)
 	try:
 		outFile.copy_node(telNode.photo_electron_image, newparent=camTelGroup, recursive=True)
-	except Exception as e:
+	except tables.exceptions.NoSuchNodeError as e:
 		pass
 	return camTelGroup
 	
