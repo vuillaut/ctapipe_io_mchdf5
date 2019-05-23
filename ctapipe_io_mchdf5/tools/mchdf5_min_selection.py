@@ -116,7 +116,7 @@ def processMinSelection(inputFileName, outputFileName, nbEventPerMin, chunkshape
 	'''
 	inFile = tables.open_file(inputFileName, "r")
 	outFile = tables.open_file(outputFileName, "w", filters=inFile.filters)
-	
+	outFile.title = inFile.title
 	#Copy the instrument and simulation groups
 	try:
 		outFile.copy_node(inFile.root.instrument, newparent=outFile.root, recursive=True)
