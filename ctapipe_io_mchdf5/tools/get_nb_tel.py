@@ -1,3 +1,8 @@
+'''
+	Auteur : Pierre Aubert
+	Mail : aubertp7@gmail.com
+	Licence : CeCILL-C
+'''
 
 from ctapipe.io import event_source
 

@@ -1,6 +1,12 @@
 
 # coding: utf-8
 
+'''
+	Auteur : Pierre Aubert
+	Mail : aubertp7@gmail.com
+	Licence : CeCILL-C
+'''
+
 import tables
 import numpy as np
 from tables import open_file

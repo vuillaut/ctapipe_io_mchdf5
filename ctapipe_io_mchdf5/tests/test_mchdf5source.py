@@ -1,3 +1,8 @@
+'''
+	Auteur : Pierre Aubert
+	Mail : aubertp7@gmail.com
+	Licence : CeCILL-C
+'''
 from pkg_resources import resource_filename
 import os
 import numpy as np
