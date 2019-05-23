@@ -41,6 +41,7 @@ def createTelescopeTransposed(outFile, telNode, chunkshape=1):
 	camTelGroup = copyTelescopeWithoutWaveform(outFile, telNode, chunkshape)
 	
 	nbPixel = np.uint64(telNode.nbPixel.read())
+	nbSlice = np.uint64(telNode.nbSlice.read())
 	
 	createTransposedWaveformTable(outFile, camTelGroup, "waveformHi", nbSlice, nbPixel, chunkshape=chunkshape)
 	nbGain = np.uint64(telNode.nbGain.read())

@@ -5,5 +5,7 @@
 '''
 
 from .telescope_copy import *
-from .r1_utils import *
-
+try:
+	from .r1_utils import *
+except:
+	pass
