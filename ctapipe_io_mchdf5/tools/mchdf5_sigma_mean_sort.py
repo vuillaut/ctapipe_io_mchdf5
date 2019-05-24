@@ -44,16 +44,14 @@ def sortChannel(outFile, telNodeOut, waveformOut, waveformIn, keyWaveform, nbPix
 	waveformIn = waveformIn.col(keyWaveform)
 	waveformInSwap = waveformIn.swapaxes(1,2)
 	#Get mean and standard deviation
-	tabMin = np.min(waveformIn, axis=(0, 1))
-	tabMax = np.max(waveformIn, axis=(0, 1))
-	
-	tabRange = tabMax - tabMin
+	tabMean = np.mean(waveformIn, axis=(0, 1))
+	tabSigma = np.std(waveformIn, axis=(0, 1))
 	#Index of the pixels
 	tabIndex = np.arange(0, nbPixel)
 	
-	matMeanSigmaIndex = np.ascontiguousarray(np.stack((tabRange, tabIndex)).T)
-	matRes = np.sort(matMeanSigmaIndex.view('f8,f8'), order=['f0'], axis=0).view(np.float64)
-	injunctionTable = matRes[:,1].astype(np.uint64)
+	matMeanSigmaIndex = np.ascontiguousarray(np.stack((tabSigma, tabMean, tabIndex)).T)
+	matRes = np.sort(matMeanSigmaIndex.view('f8,f8,f8'), order=['f0', 'f1'], axis=0).view(np.float64)
+	injunctionTable = matRes[:,2].astype(np.uint64)
 	
 	outFile.create_array(telNodeOut, tabInjName, injunctionTable, "Injunction table to store the pixels order of a channel")
 	
