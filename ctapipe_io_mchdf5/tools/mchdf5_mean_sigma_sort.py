@@ -74,7 +74,7 @@ def applyInjunctionTableOnMatrix(signalSelect, injunctionTable):
 	Return:
 		matrix with swaped rows according to the injunction table
 	'''
-	matOut = np.zero(signalSelect.shape, dtype=signalSelect.dtype)
+	matOut = np.zeros(signalSelect.shape, dtype=signalSelect.dtype)
 	
 	for inputRow, rowIndex in zip(signalSelect, injunctionTable):
 		matOut[rowIndex][:] = inputRow[:]
@@ -82,27 +82,31 @@ def applyInjunctionTableOnMatrix(signalSelect, injunctionTable):
 	return matOut
 
 
-def sortChannel(waveformOut, waveformIn, keyWaveform, nbPixel):
+def sortChannel(outFile, telNodeOut, waveformOut, waveformIn, keyWaveform, nbPixel, tabInjName):
 	'''
 	Transpose all the telescopes channels (waveformHi and waveformLo)
 	Parameters:
 	-----------
+		telNodeOut : output telescope
 		waveformOut : signal selected
 		waveformIn : signal to be selected
 		keyWaveform : name of the desired column in tables waveformOut and waveformIn)
 		nbPixel : number of pixel in the camera
+		tabInjName : name of the injunction table array
 	'''
 	waveformIn = waveformIn.col(keyWaveform)
 	waveformInSwap = waveformIn.swapaxes(1,2)
 	#Get mean and standard deviation
-	tabMean = np.mean(waveformLo, axis=(0, 1))
-	tabSigma = np.std(waveformLo, axis=(0, 1))
+	tabMean = np.mean(waveformIn, axis=(0, 1))
+	tabSigma = np.std(waveformIn, axis=(0, 1))
 	#Index of the pixels
 	tabIndex = np.arange(0, nbPixel)
 	
 	matMeanSigmaIndex = np.ascontiguousarray(np.stack((tabMean, tabSigma, tabIndex)).T)
 	matRes = np.sort(matMeanSigmaIndex.view('f8,f8,f8'), order=['f0', 'f1'], axis=0).view(np.float64)
-	injunctionTable = matResHi[:,2]
+	injunctionTable = matRes[:,2].astype(np.uint64)
+	
+	outFile.create_array(telNodeOut, tabInjName, injunctionTable, "Injunction table to store the pixels order of a channel")
 	
 	tabWaveformOut = waveformOut.row
 	for signalSelect in waveformInSwap:
@@ -112,18 +116,19 @@ def sortChannel(waveformOut, waveformIn, keyWaveform, nbPixel):
 	waveformOut.flush()
 
 
-def copySortedTelescope(telNodeOut, telNodeIn):
+def copySortedTelescope(outFile, telNodeOut, telNodeIn):
 	'''
 	Transpose the telescope data
 	Parameters:
 	-----------
+		outFile : output file
 		telNodeOut : output telescope
 		telNodeIn : input telescope
 	'''
 	nbPixel = np.uint64(telNodeIn.nbPixel.read())
-	sortChannel(telNodeOut.waveformHi, telNodeIn.waveformHi, "waveformHi", nbPixel)
+	sortChannel(outFile, telNodeOut, telNodeOut.waveformHi, telNodeIn.waveformHi, "waveformHi", nbPixel, "orderHi")
 	try:
-		sortChannel(telNodeOut.waveformLo, telNodeIn.waveformLo, "waveformLo", nbPixel)
+		sortChannel(outFile, telNodeOut, telNodeOut.waveformLo, telNodeIn.waveformLo, "waveformLo", nbPixel, "orderLo")
 	except Exception as e:
 		print(e)
 
@@ -138,7 +143,7 @@ def copySortedR1(outFile, inFile):
 	'''
 	for telNodeIn, telNodeOut in zip(inFile.walk_nodes("/r1", "Group"), outFile.walk_nodes("/r1", "Group")):
 		try:
-			copySortedTelescope(telNodeOut, telNodeIn)
+			copySortedTelescope(outFile, telNodeOut, telNodeIn)
 		except tables.exceptions.NoSuchNodeError as e:
 			pass
 
