@@ -18,6 +18,7 @@ entry_points['console_scripts'] = ['simtel2hdf5v1 = ctapipe_io_mchdf5.tools.simt
 					'mchdf5v2meansigmasortslicepixel = ctapipe_io_mchdf5.tools.mchdf5_mean_sigma_sort_slice_pixel:main',
 					'mchdf5v2rangesort = ctapipe_io_mchdf5.tools.mchdf5_range_sort:main',
 					'mchdf5v2sigmameansort = ctapipe_io_mchdf5.tools.mchdf5_sigma_mean_sort:main',
+					'mchdf5v2multiplesort = ctapipe_io_mchdf5.tools.mchdf5_multiple_sort:main'
 					]
 
 setup(
