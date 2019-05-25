@@ -22,7 +22,7 @@ def convertStringToSelectionMode(inputStr):
 	Return:
 		corresponding selection mode
 	'''
-	strLow = inputStrt.olower()
+	strLow = inputStr.lower()
 	if strLow == "range":
 		return MODE_RANGE
 	elif strLow == "mean":
@@ -109,7 +109,7 @@ def getInjunctionTableFromData(waveformIn, tabIndex, selectionMode):
 		return getSelectionMean(waveformIn, tabIndex)
 	elif selectionMode == MODE_RANGE:
 		return getSelectionRange(waveformIn, tabIndex)
-	elif if selectionMode == MODE_SIGMA:
+	elif selectionMode == MODE_SIGMA:
 		return getSelectionSigma(waveformIn, tabIndex)
 	else:
 		return tabIndex
@@ -171,8 +171,8 @@ def sortChannel(waveformOut, waveformIn, keyWaveform, nbPixel, tabInjName,
 	else:
 		nbEvent = waveformIn.shape[0]
 		nbBlock = int(nbEvent/nbEventPerInjTab)
-		lastBlockEventIndex = nbEventPerInjTab*nbEvent
-		sizeLastBlock = nbEvent - lastBlockEventIndex
+		lastBlockEventIndex = nbEventPerInjTab*nbBlock - 1
+		sizeLastBlock = nbEvent - nbEventPerInjTab*nbBlock
 		for i in range(0, nbBlock):
 			sortChannelBlock(rowWaveformOut, waveformIn[i*nbEventPerInjTab:(i+1)*nbEventPerInjTab],
 					keyWaveform, tabIndex, isStoreSlicePixel, selectionMode, rowInjTab)
@@ -180,7 +180,7 @@ def sortChannel(waveformOut, waveformIn, keyWaveform, nbPixel, tabInjName,
 			sortChannelBlock(rowWaveformOut, waveformIn[lastBlockEventIndex:-1],
 					keyWaveform, tabIndex, isStoreSlicePixel, selectionMode, rowInjTab)
 	tableInjTab.flush()
-	rowWaveformOut.flush()
+	waveformOut.flush()
 
 
 def createInjunctionTabTable(hfile, camTelGroup, nameTable, nbPixel, chunkshape=1):
@@ -216,12 +216,12 @@ def copySortedTelescope(outFile, telNodeOut, telNodeIn, isStoreSlicePixel, selec
 		nbEventPerInjTab : number of event to be treated with the same injunction table
 	'''
 	nbPixel = np.uint64(telNodeIn.nbPixel.read())
-	tableInjTabHi = createInjunctionTabTable(outFile, telNodeOut, "injunctionHi")
+	tableInjTabHi = createInjunctionTabTable(outFile, telNodeOut, "injunctionHi", nbPixel)
 	sortChannel(telNodeOut.waveformHi, telNodeIn.waveformHi, "waveformHi", nbPixel, "orderHi",
 			isStoreSlicePixel, selectionMode, nbEventPerInjTab, tableInjTabHi)
 	tableInjTabHi.flush()
 	try:
-		tableInjTabLo = createInjunctionTabTable(outFile, telNodeOut, "injunctionLo")
+		tableInjTabLo = createInjunctionTabTable(outFile, telNodeOut, "injunctionLo", nbPixel)
 		sortChannel(telNodeOut.waveformLo, telNodeIn.waveformLo, "waveformLo", nbPixel, "orderLo",
 				isStoreSlicePixel, selectionMode, nbEventPerInjTab, tableInjTabLo)
 		tableInjTabLo.flush()
@@ -284,8 +284,7 @@ def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-i', '--input', help="hdf5 r1 v2 output file", required=True)
 	parser.add_argument('-o', '--output', help="hdf5 r1 v2 output file (sorted)", required=True)
-	parser.add_argument('-p', '--pixelslice', help="store data by (pixel, slice)", required=False)
-	parser.add_argument('-s', '--slicepixel', help="store data by (slice, pixel) default", required=False)
+	parser.add_argument('-r', '--order', help="order to store data. slicepixel : (slice, pixel) default, or pixelslice (pixel, slice)", required=False)
 	parser.add_argument('-n', '--nbeventperInjTab', help="number of events per injunction table (0 mean all the events)", required=True, type=int)
 	parser.add_argument('-m', '--selectionmode', help="mode of the pixels selection (RANGE, MEAN, SIGMA)", required=True)
 	
@@ -295,10 +294,9 @@ def main():
 	outputFileName = args.output
 	
 	isStoreSlicePixel = True
-	if args.pixelslice != None:
-		isStoreSlicePixel = False
-	if args.slicepixel != None:
-		isStoreSlicePixel = True
+	if args.order != None:
+		if args.order in ["pixelslice", "slicepixel"]:
+			isStoreSlicePixel = args.order == "slicepixel"
 	
 	selectionMode = convertStringToSelectionMode(args.selectionmode)
 	nbEventPerInjTab = args.nbeventperInjTab
