@@ -69,6 +69,23 @@ def createAllTelescopeSorted(outFile, inFile, isStoreSlicePixel, chunkshape=1):
 			pass
 
 
+def createSortedWaveformTableShape(hfile, camTelGroup, nameWaveformHi, dataEntryShape, chunkshape=1):
+	'''
+	Create the table to store the signal
+	Parameters:
+		hfile : HDF5 file to be used
+		camTelGroup : telescope group in which to put the tables
+		nameWaveformHi : name of the table to store the waveform
+		dataEntryShape : shape of the entries to be stored
+		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
+	Return:
+		create table
+	'''
+	columns_dict_waveformHi  = {nameWaveformHi: tables.UInt16Col(shape=dataEntryShape)}
+	description_waveformHi = type('description columns_dict_waveformHi', (tables.IsDescription,), columns_dict_waveformHi)
+	return hfile.create_table(camTelGroup, nameWaveformHi, description_waveformHi, "Table of waveform of the signal", chunkshape=chunkshape)
+
+
 
 
 
