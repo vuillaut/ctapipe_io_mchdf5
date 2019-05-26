@@ -36,7 +36,7 @@ def convertStringToOrderMode(inputStr):
 	Return:
 		corresponding selection mode
 	'''
-	strLow = inputStr.lower()
+	strLow = inputStr.upper()
 	if strLow == "PES":
 		return MODE_PES
 	elif strLow == "PSE":
@@ -118,7 +118,7 @@ def orderSwapChannel(outFile, telNodeOut, waveformIn, keyWaveform, selectionMode
 	
 	shapeStoredData = getShapeFromOrder(waveformIn.shape[0], waveformIn.shape[1], waveformIn.shape[2], selectionMode)
 	
-	waveformOut = createSortedWaveformTableShape(outFile, telNodeOut, keyWaveform, dataEntryShape)
+	waveformOut = createSortedWaveformTableShape(outFile, telNodeOut, keyWaveform, shapeStoredData)
 	rowWaveformOut = waveformOut.row
 	
 	swappedWaveform = getWaveformSwappedFromOrder(waveformIn, selectionMode)
