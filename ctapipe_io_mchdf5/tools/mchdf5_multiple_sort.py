@@ -45,8 +45,13 @@ def applyInjunctionTableOnMatrix(signalSelect, injunctionTable):
 	'''
 	matOut = np.zeros(signalSelect.shape, dtype=signalSelect.dtype)
 	
-	for inputRow, rowIndex in zip(signalSelect, injunctionTable):
-		matOut[rowIndex][:] = inputRow[:]
+	#Encode
+	for i, rowIndex in enumerate(injunctionTable):
+		matOut[i][:] = signalSelect[rowIndex][:]
+	
+	#Decode
+	#for inputRow, rowIndex in zip(signalSelect, injunctionTable):
+		#matOut[rowIndex][:] = inputRow[:]
 	
 	return matOut
 
