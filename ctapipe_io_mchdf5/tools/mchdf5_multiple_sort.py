@@ -13,6 +13,8 @@ from .copy_sort import createAllTelescopeSorted
 MODE_RANGE = 0
 MODE_MEAN = 1
 MODE_SIGMA = 2
+MODE_MIN = 3
+MODE_MAX = 4
 
 def convertStringToSelectionMode(inputStr):
 	'''
@@ -29,8 +31,12 @@ def convertStringToSelectionMode(inputStr):
 		return MODE_MEAN
 	elif strLow == "sigma":
 		return MODE_SIGMA
+	elif strLow == "min":
+		return MODE_MIN
+	elif strLow == "max":
+		return MODE_MAX
 	else:
-		raise(RuntimeError, "convertStringToSelectionMode : unknown mode '" +inputStr + "', expect RANGE, MEAN, SIGMA")
+		raise(RuntimeError, "convertStringToSelectionMode : unknown mode '" +inputStr + "', expect RANGE, MEAN, SIGMA, MIN, MAX")
 
 
 
@@ -66,6 +72,34 @@ def getSelectionMean(waveformIn, tabIndex):
 	tabMean = np.mean(waveformIn, axis=(0, 1))
 	matMeanSigmaIndex = np.ascontiguousarray(np.stack((tabMean, tabIndex)).T)
 	matRes = np.sort(matMeanSigmaIndex.view('f8,f8'), order=['f0'], axis=0).view(np.float64)
+	injunctionTable = matRes[:,1].astype(np.uint64)
+	return injunctionTable
+
+
+def getSelectionMin(waveformIn, tabIndex):
+	'''
+	Create the injunction table with min mode
+	Parameters:
+		waveformIn : signal to be used
+		tabIndex : table of the index of the pixels
+	'''
+	tabMin = np.min(waveformIn, axis=(0, 1))
+	matMinSigmaIndex = np.ascontiguousarray(np.stack((tabMin, tabIndex)).T)
+	matRes = np.sort(matMinSigmaIndex.view('f8,f8'), order=['f0'], axis=0).view(np.float64)
+	injunctionTable = matRes[:,1].astype(np.uint64)
+	return injunctionTable
+
+
+def getSelectionMax(waveformIn, tabIndex):
+	'''
+	Create the injunction table with min mode
+	Parameters:
+		waveformIn : signal to be used
+		tabIndex : table of the index of the pixels
+	'''
+	tabMax = np.max(waveformIn, axis=(0, 1))
+	matMaxIndex = np.ascontiguousarray(np.stack((tabMax, tabIndex)).T)
+	matRes = np.sort(matMaxIndex.view('f8,f8'), order=['f0'], axis=0).view(np.float64)
 	injunctionTable = matRes[:,1].astype(np.uint64)
 	return injunctionTable
 
@@ -112,10 +146,14 @@ def getInjunctionTableFromData(waveformIn, tabIndex, selectionMode):
 	'''
 	if selectionMode == MODE_MEAN:
 		return getSelectionMean(waveformIn, tabIndex)
+	elif selectionMode == MODE_MIN:
+		return getSelectionMin(waveformIn, tabIndex)
 	elif selectionMode == MODE_RANGE:
 		return getSelectionRange(waveformIn, tabIndex)
 	elif selectionMode == MODE_SIGMA:
 		return getSelectionSigma(waveformIn, tabIndex)
+	elif selectionMode == MODE_MAX:
+		return getSelectionMax(waveformIn, tabIndex)
 	else:
 		return tabIndex
 
@@ -291,7 +329,7 @@ def main():
 	parser.add_argument('-o', '--output', help="hdf5 r1 v2 output file (sorted)", required=True)
 	parser.add_argument('-r', '--order', help="order to store data. slicepixel : (slice, pixel) default, or pixelslice (pixel, slice)", required=False)
 	parser.add_argument('-n', '--nbeventperInjTab', help="number of events per injunction table (0 mean all the events)", required=True, type=int)
-	parser.add_argument('-m', '--selectionmode', help="mode of the pixels selection (RANGE, MEAN, SIGMA)", required=True)
+	parser.add_argument('-m', '--selectionmode', help="mode of the pixels selection (RANGE, MEAN, SIGMA, MIN, MAX)", required=True)
 	
 	args = parser.parse_args()
 
