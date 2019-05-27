@@ -80,10 +80,10 @@ def processMinSelectionTelescope(telNodeOut, telNodeIn, nbEventPerMin):
 		nbEventPerMin : number of events to be used to compute one minimum
 	'''
 	#Get the minimum with numpy min function
-	processMinSelectionChannel(telNodeOut.waveformMinHi, "waveformMinHi", telNodeOut.minHi, "minHi", telNodeIn.waveformHi, "waveformHi", nbEventPerMin)
+	processMinSelectionChannel(telNodeOut.waveformHi, "waveformHi", telNodeOut.minHi, "minHi", telNodeIn.waveformHi, "waveformHi", nbEventPerMin)
 	
 	try:
-		processMinSelectionChannel(telNodeOut.waveformMinLo, "waveformMinLo", telNodeOut.minLo, "minLo", telNodeIn.waveformLo, "waveformLo", nbEventPerMin)
+		processMinSelectionChannel(telNodeOut.waveformLo, "waveformLo", telNodeOut.minLo, "minLo", telNodeIn.waveformLo, "waveformLo", nbEventPerMin)
 	except Exception as e:
 		pass
 

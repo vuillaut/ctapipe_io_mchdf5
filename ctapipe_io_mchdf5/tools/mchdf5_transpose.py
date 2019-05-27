@@ -39,7 +39,7 @@ def createTelescopeTransposed(outFile, telNode, chunkshape=1):
 		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
 	'''
 	camTelGroup = copyTelescopeWithoutWaveform(outFile, telNode, chunkshape)
-	
+	print("createTelescopeTransposed : base of telescope copied")
 	nbPixel = np.uint64(telNode.nbPixel.read())
 	nbSlice = np.uint64(telNode.nbSlice.read())
 	
@@ -58,12 +58,13 @@ def createAllTelescopeTransposed(outFile, inFile, chunkshape=1):
 		inFile : input file
 		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
 	'''
+	print("createAllTelescopeTransposed : create r1 group")
 	outFile.create_group("/", 'r1', 'Raw data waveform informations of the run')
 	for telNode in inFile.walk_nodes("/r1", "Group"):
 		try:
 			createTelescopeTransposed(outFile, telNode, chunkshape=chunkshape)
 		except tables.exceptions.NoSuchNodeError as e:
-			pass
+			print("createAllTelescopeTransposed : error ",e)
 
 
 def transposeChannel(waveformOut, waveformIn, keyWaveform):
@@ -75,8 +76,7 @@ def transposeChannel(waveformOut, waveformIn, keyWaveform):
 		waveformIn : signal to be selected
 		keyWaveform : name of the desired column in tables waveformOut and waveformIn)
 	'''
-	waveformIn = waveformIn.read()
-	waveformIn = waveformIn[keyWaveform]
+	waveformIn = waveformIn.col(keyWaveform)
 	
 	tabWaveformOut = waveformOut.row
 	for signalSelect in waveformIn:
@@ -94,11 +94,12 @@ def copyTransposedTelescope(telNodeOut, telNodeIn):
 		telNodeOut : output telescope
 		telNodeIn : input telescope
 	'''
+	print("copyTransposedTelescope : telNodeOut :", telNodeOut)
 	transposeChannel(telNodeOut.waveformHi, telNodeIn.waveformHi, "waveformHi")
 	try:
 		transposeChannel(telNodeOut.waveformLo, telNodeIn.waveformLo, "waveformLo")
-	except Exception as e:
-		print(e)
+	except tables.exceptions.NoSuchNodeError as e:
+		print("copyTransposedTelescope : error :",e)
 
 
 def copyTransposedR1(outFile, inFile):
@@ -109,11 +110,12 @@ def copyTransposedR1(outFile, inFile):
 		outFile : output file
 		inFile : input file
 	'''
+	print("copyTransposedR1 : begin")
 	for telNodeIn, telNodeOut in zip(inFile.walk_nodes("/r1", "Group"), outFile.walk_nodes("/r1", "Group")):
 		try:
 			copyTransposedTelescope(telNodeOut, telNodeIn)
 		except tables.exceptions.NoSuchNodeError as e:
-			pass
+			print("copyTransposedR1 : error :",e)
 
 
 def transposeFile(inputFileName, outputFileName):

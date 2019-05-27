@@ -46,11 +46,11 @@ def createTelescopeMinSelectionNode(outFile, telNode, chunkshape=1):
 	nbPixel = np.uint64(telNode.nbPixel.read())
 	nbSlice = np.uint64(telNode.nbSlice.read())
 	
-	createMinWaveformTable(outFile, camTelGroup, "waveformMinHi", "minHi", nbSlice, nbPixel, chunkshape=chunkshape)
+	createMinWaveformTable(outFile, camTelGroup, "waveformHi", "minHi", nbSlice, nbPixel, chunkshape=chunkshape)
 	
 	nbGain = np.uint64(telNode.nbGain.read())
 	if nbGain > 1:
-		createMinWaveformTable(outFile, camTelGroup, "waveformMinLo", "minLo", nbSlice, nbPixel, chunkshape=chunkshape)
+		createMinWaveformTable(outFile, camTelGroup, "waveformLo", "minLo", nbSlice, nbPixel, chunkshape=chunkshape)
 
 
 def createAllTelescopeMinSelected(outFile, inFile, nbEventPerMin, chunkshape=1):

@@ -18,10 +18,13 @@ def copyTelescopeWithoutWaveform(outFile, telNode, chunkshape=1):
 	-------
 		created camera node
 	'''
+	nbPixel = telNode.nbPixel
 	telGroupName = telNode._v_name
+	print("copyTelescopeWithoutWaveform : telName = '",telGroupName,"'")
+	
 	camTelGroup = outFile.create_group("/r1", telGroupName, 'Data of telescopes '+telGroupName)
 	
-	outFile.copy_node(telNode.nbPixel, newparent=camTelGroup, recursive=True)
+	outFile.copy_node(nbPixel, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.nbSlice, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.nbGain, newparent=camTelGroup, recursive=True)
 	outFile.copy_node(telNode.telIndex, newparent=camTelGroup, recursive=True)
