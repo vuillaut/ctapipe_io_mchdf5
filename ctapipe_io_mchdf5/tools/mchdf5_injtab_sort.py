@@ -29,15 +29,22 @@ def sortChannel(outFile, telNodeOut, waveformOut, waveformIn, keyWaveform, nbPix
 	waveformInSwap = waveformIn.swapaxes(1,2)
 	
 	outFile.create_array(telNodeOut, tabInjName, injunctionTable, "Injunction table to store the pixels order of a channel")
-	
 	tabWaveformOut = waveformOut.row
-	for signalSelect in waveformInSwap:
-		tabTmp = signalSelect[injunctionTable]
-		if isStoreSlicePixel:
-			tabTmp = tabTmp.swapaxes(0, 1)
-		
-		tabWaveformOut[keyWaveform] = tabTmp
-		tabWaveformOut.append()
+	if injunctionTable.size == waveformIn.shape[2]:
+		for signalSelect in waveformInSwap:
+			tabTmp = signalSelect[injunctionTable]
+			if isStoreSlicePixel:
+				tabTmp = tabTmp.swapaxes(0, 1)
+			
+			tabWaveformOut[keyWaveform] = tabTmp
+			tabWaveformOut.append()
+	else:
+		for signalSelect in waveformInSwap:
+			tabTmp = signalSelect
+			if isStoreSlicePixel:
+				tabTmp = tabTmp.swapaxes(0, 1)
+			tabWaveformOut[keyWaveform] = tabTmp
+			tabWaveformOut.append()
 	
 	waveformOut.flush()
 
