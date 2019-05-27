@@ -123,7 +123,7 @@ def main():
 	inputFileName = args.input
 	outputFileName = args.output
 	
-	injunctionTable = np.fromfile(args.injtab)
+	injunctionTable = np.fromfile(args.injtab, dtype=np.uint16)
 	
 	isStoreSlicePixel = True
 	if args.pixelslice != None:
