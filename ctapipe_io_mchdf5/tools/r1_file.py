@@ -20,12 +20,12 @@ def openOutputFile(fileName, compressionLevel=0):
 		compressionLevel : expected compression level (from 0 (no compression, default) to 9)
 	'''
 	if compressionLevel == 0:
-		hfile = tables.open_file(args.output, mode = "w")
+		hfile = tables.open_file(fileName, mode = "w")
 		hfile.title = "R1-V2"
 		return hfile
 	else:
 		zstdFilter = tables.Filters(complevel=compressionLevel, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
-		hfile = tables.open_file(args.output, mode = "w", filters=zstdFilter)
+		hfile = tables.open_file(fileName, mode = "w", filters=zstdFilter)
 		hfile.title = "R1-V2"
 		return hfile
 	
