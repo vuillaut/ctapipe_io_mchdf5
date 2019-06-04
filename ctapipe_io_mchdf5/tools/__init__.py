@@ -7,5 +7,6 @@
 from .telescope_copy import *
 try:
 	from .r1_utils import *
+	from .r1_file import *
 except:
 	pass

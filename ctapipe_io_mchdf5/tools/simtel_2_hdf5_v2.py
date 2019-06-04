@@ -18,7 +18,7 @@ from .simulation_utils import *
 from .get_nb_tel import getNbTel
 from .instrument_utils import *
 from .r1_utils import *
-
+from .r1_file import *
 
 def createFileStructure(hfile, telInfo_from_evt):
 	'''
@@ -56,12 +56,7 @@ def main():
 	
 	telInfo_from_evt, nbEvent = getTelescopeInfoFromEvent(inputFileName, nbTel)
 	print("Found",nbEvent, "events")
-	zstdFilter = tables.Filters(complevel=6, complib='blosc:zstd', shuffle=False, bitshuffle=False, fletcher32=False)
-	hfile = tables.open_file(args.output, mode = "w"
-			  , filters=zstdFilter
-			  )
-	
-	hfile.title = "R1-V2"
+	hfile = openOutputFile(args.output, compressionLevel=6)
 	
 	print('Create file structure')
 	tableMcCorsikaEvent = createFileStructure(hfile, telInfo_from_evt)
