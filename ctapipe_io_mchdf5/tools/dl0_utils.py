@@ -22,19 +22,17 @@ def createDL0TableTel(hfile, telNode, nbGain, nbPixel, nbSlice, chunkshape=1):
 		nbSlice : number of slices
 		chunkshape : shape of the chunk to be used to store the data
 	'''
-	pixelLo = create_vlarray(camTelGroup, "pixelLo", tables.UInt16Atom(shape=()), "table of the index of the pixels which are in low gain mode",)
+	if nbGain > 1:
+		pixelLo = create_vlarray(camTelGroup, "pixelLo", tables.UInt16Atom(shape=()), "table of the index of the pixels which are in low gain mode",)
 	pixelWaveform = create_vlarray(camTelGroup, "pixelWaveform", tables.UInt16Atom(shape=(nbSlice)), "table of the index of the pixels recorded with the waveform",)
 	
-	#TODO finish the work
+	columns_dict_waveformoffset  = {"waveformoffset": tables.UInt64Col(shape=())}
+	description_waveformoffset = type('description columns_dict_waveformoffset', (tables.IsDescription,), columns_dict_waveformoffset)
+	hfile.create_table(telNode, 'waveformoffset', description_waveformoffset, "Offset of the waveform stored in the waveform table", chunkshape=chunkshape)
 	
-	#columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
-	#description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
-	#hfile.create_table(telNode, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", chunkshape=chunkshape)
-	
-	#if nbGain > 1:
-		#columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
-		#description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
-		#hfile.create_table(telNode, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", chunkshape=chunkshape)
+	columns_dict_waveform  = {"waveform": tables.UInt16Col(shape=nbSlice)}
+	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
+	hfile.create_table(telNode, 'waveform', description_waveform, "Table of waveform of the pixel with waveform", chunkshape=chunkshape)
 
 
 def createDL0TelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
@@ -55,8 +53,6 @@ def createDL0TelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 	nbSlice = np.uint64(telInfo[TELINFO_NBSLICE])
 	
 	createDL0TableTel(hfile, camTelGroup, nbGain, nbPixel, nbSlice, chunkshape=chunkshape)
-
-
 
 
 def createDL0Dataset(hfile, telInfo_from_evt):
