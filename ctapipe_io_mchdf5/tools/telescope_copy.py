@@ -49,16 +49,18 @@ def copyTelescopeWithoutWaveform(outFile, telNode, chunkshape=1):
 	
 
 
-def copyAllTelWithoutWaveform(outFile, inFile, chunkshape=1):
+def copyAllTelWithoutWaveform(outFile, inFile, r1NodeName="r1", docR1Node="Raw data waveform informations of the run", chunkshape=1):
 	'''
 	Create all the telescopes without the waveform
 	Parameters:
 	-----------
 		outFile : output file
 		inFile : input file
+		r1NodeName : name of the node to be created
+		docR1Node : documentation of the created node
 		chunkshape : shape of the chunk to be used to store the data of waveform and minimum
 	'''
-	outFile.create_group("/", 'r1', 'Raw data waveform informations of the run')
+	outFile.create_group("/", r1NodeName, docR1Node)
 	for telNode in inFile.walk_nodes("/r1", "Group"):
 		try:
 			copyTelescopeWithoutWaveform(outFile, telNode, chunkshape=chunkshape)
