@@ -24,7 +24,7 @@ def createDL0TableTel(hfile, telNode, nbGain, nbPixel, nbSlice, chunkshape=1):
 	'''
 	if nbGain > 1:
 		pixelLo = hfile.create_vlarray(telNode, "pixelLo", tables.UInt16Atom(shape=()), "table of the index of the pixels which are in low gain mode",)
-	pixelWaveform = hfile.create_vlarray(telNode, "pixelWaveform", tables.UInt16Atom(shape=(nbSlice)), "table of the index of the pixels recorded with the waveform",)
+	pixelWaveform = hfile.create_vlarray(telNode, "pixelWaveform", tables.UInt16Atom(shape=()), "table of the index of the pixels recorded with the waveform",)
 
 	columns_dict_waveformoffset  = {"waveformoffset": tables.UInt64Col(shape=())}
 	description_waveformoffset = type('description columns_dict_waveformoffset', (tables.IsDescription,), columns_dict_waveformoffset)
