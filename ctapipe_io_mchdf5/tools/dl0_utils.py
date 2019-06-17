@@ -26,15 +26,18 @@ def createDL0TableTel(hfile, telNode, nbGain, nbPixel, nbSlice, chunkshape=1):
 		pixelLo = hfile.create_vlarray(telNode, "pixelLo", tables.UInt16Atom(shape=()), "table of the index of the pixels which are in low gain mode",)
 	pixelWaveform = hfile.create_vlarray(telNode, "pixelWaveform", tables.UInt16Atom(shape=()), "table of the index of the pixels recorded with the waveform",)
 
-	columns_dict_waveformoffset  = {"waveformoffset": tables.UInt64Col(shape=())}
-	description_waveformoffset = type('description columns_dict_waveformoffset', (tables.IsDescription,), columns_dict_waveformoffset)
-	hfile.create_table(telNode, 'waveformoffset', description_waveformoffset, "Offset of the waveform stored in the waveform table", chunkshape=chunkshape)
+	#columns_dict_waveformoffset  = {"waveformoffset": tables.UInt64Col(shape=())}
+	#description_waveformoffset = type('description columns_dict_waveformoffset', (tables.IsDescription,), columns_dict_waveformoffset)
+	#hfile.create_table(telNode, 'waveformoffset', description_waveformoffset, "Offset of the waveform stored in the waveform table", chunkshape=chunkshape)
 	
 	columns_dict_waveform  = {"waveform": tables.UInt16Col(shape=nbSlice)}
 	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
 	hfile.create_table(telNode, 'waveform', description_waveform, "Table of waveform of the pixel with waveform", chunkshape=chunkshape)
 	
-	columns_dict_signal  = {"signal": tables.Float32Col(shape=(nbPixel))}
+	columns_dict_signal  = {
+				"signal": tables.Float32Col(shape=(nbPixel)),
+				"waveformoffset": tables.UInt64Col(shape=())
+			 }
 	description_signal = type('description columns_dict_signal', (tables.IsDescription,), columns_dict_signal)
 	hfile.create_table(telNode, 'signal', description_signal, "Calibrated and integrated signal", chunkshape=chunkshape)
 
