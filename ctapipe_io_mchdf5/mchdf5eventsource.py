@@ -192,8 +192,8 @@ class MCHDF5EventSource(EventSource):
                 data.r0.tel[telescopeId].waveform = matSignalPS
 
                 n_gain, n_pixels, n_samples = matSignalPS.shape
-                ped = data.mc.tel[tel_id].pedestal[..., np.newaxis] / n_samples
-                gain = data.mc.tel[tel_id].dc_to_pe[..., np.newaxis]
+                ped = data.mc.tel[telescopeId].pedestal[..., np.newaxis] / n_samples
+                gain = data.mc.tel[telescopeId].dc_to_pe[..., np.newaxis]
                 data.r1.tel[telescopeId].waveform = (matSignalPS - ped) * gain
 
                 #data.r0.tel[telescopeId].image= matSignalPS.sum(axis=2)
