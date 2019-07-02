@@ -156,7 +156,7 @@ class MCHDF5EventSource(EventSource):
             #data.trig.tels_with_trigger = set(tels_with_data)
             data.trig.tels_with_trigger = array(list(tels_with_data), dtype=int16)
             
-            indexSimu = np.where(tabEventId == 2498406)
+            # indexSimu = np.where(tabEventId == 2498406)
             '''
             time_s, time_ns = file.get_central_event_gps_time()
             data.trig.gps_time = Time(time_s * u.s, time_ns * u.ns, format='unix', scale='utc')
@@ -191,7 +191,7 @@ class MCHDF5EventSource(EventSource):
                 matSignalPS = matWaveform[0].swapaxes(1, 2)
                 data.r0.tel[telescopeId].waveform = matSignalPS
 
-                n_gain, n_pixels, n_samples = matSignalPS.shape
+                _, _, n_samples = matSignalPS.shape
                 ped = data.mc.tel[telescopeId].pedestal[..., np.newaxis] / n_samples
                 gain = data.mc.tel[telescopeId].dc_to_pe[..., np.newaxis]
                 data.r1.tel[telescopeId].waveform = (matSignalPS - ped) * gain
