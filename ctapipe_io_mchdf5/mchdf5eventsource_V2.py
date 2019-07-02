@@ -78,7 +78,7 @@ class MCHDF5EventSourceV2(EventSource):
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		pass
 
-	
+
 	def _generator(self):
 		# HiPeData arranges data per telescope and not by event like simtel
 		# We need to first create a dictionary.
@@ -189,6 +189,12 @@ class MCHDF5EventSourceV2(EventSource):
 					matSignalPSLo = waveformLo.swapaxes(0, 1)
 					tabHiLo = np.stack((matSignalPSHi, matSignalPSLo))
 					data.r0.tel[telescopeId].waveform = tabHiLo
+
+					_, _, n_samples = tabHiLo.shape
+					ped = data.mc.tel[telescopeId].pedestal[..., np.newaxis] / n_samples
+					gain = data.mc.tel[telescopeId].dc_to_pe[..., np.newaxis]
+					data.r1.tel[telescopeId].waveform = (tabHiLo - ped) * gain
+
 				except Exception as e:
 					print(e)
 					data.r0.tel[telescopeId].waveform = np.expand_dims(matSignalPSHi, axis=0)
