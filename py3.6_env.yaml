@@ -9,5 +9,6 @@ dependencies:
   - pytest
   - pytables
   - ctapipe
+  - pip
   - pip:
       - pytest_runner
