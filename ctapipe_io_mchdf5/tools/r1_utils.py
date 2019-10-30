@@ -7,8 +7,10 @@
 import numbers
 import tables
 import numpy as np
-from .get_telescope_info import *
-
+try:
+	from .get_telescope_info import *
+except:
+	pass
 
 class TriggerInfo(tables.IsDescription):
 	'''
@@ -44,19 +46,42 @@ def createWaveformTel(hfile, telNode, nbGain, image_shape, chunkshape=1):
 		columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
 		description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
 		hfile.create_table(telNode, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", chunkshape=chunkshape)
-	
 
 
-def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
+def createTablePedestal(hfile, camTelGroup, nbGain, nbPixel):
 	'''
-	Create the telescope group and table
-	It is important not to add an other dataset with the type of the camera to simplify the serach of a telescope by telescope index in the file structure
+	Create the pedestal description of the telescope
+	Parameters:
+		hfile : HDF5 file to be used
+		camTelGroup : camera node to be used
+		nbGain : number of gain of the camera
+		nbPixel : number of pixel of the camera
+	Return:
+		table of the pedestal of the telescope
+	'''
+	ped_shape = (nbGain, nbPixel)
+	columns_dict_pedestal = {
+		"first_event_id" :  tables.UInt64Col(),
+		"last_event_id" :  tables.UInt64Col(),
+		"pedestal" :  tables.Float32Col(shape=ped_shape)
+	}
+	description_pedestal = type('description columns_dict_pedestal', (tables.IsDescription,), columns_dict_pedestal)
+	tablePedestal = hfile.create_table(camTelGroup, 'pedestal', description_pedestal, "Table of the pedestal for high and low gain", expectedrows=1, chunkshape=1)
+	return tablePedestal
+
+
+def createBaseTelescopeGroupTable(hfile, telId, telInfo, chunkshape=1):
+	'''
+	Create the base of the telescope structure without waveform
 	Parameters:
 	-----------
 		hfile : HDF5 file to be used
 		telId : id of the telescope
 		telInfo : table of some informations related to the telescope
 		chunkshape : shape of the chunk to be used to store the data
+	Return:
+	-------
+		Created camera group
 	'''
 	telIndex = telId - 1
 	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telId), 'Data of telescopes '+str(telId))
@@ -95,22 +120,11 @@ def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 	
 	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events", chunkshape=chunkshape)
 	
-	image_shape = (nbSlice, nbPixel)
-	
-	createWaveformTel(hfile, camTelGroup, nbGain, image_shape, chunkshape=chunkshape)
-	
 	columns_dict_photo_electron_image  = {"photo_electron_image": tables.Float32Col(shape=nbPixel)}
 	description_photo_electron_image = type('description columns_dict_photo_electron_image', (tables.IsDescription,), columns_dict_photo_electron_image)
 	hfile.create_table(camTelGroup, 'photo_electron_image', description_photo_electron_image, "Table of real signal in the camera (for simulation only)", chunkshape=chunkshape)
 	
-	ped_shape = (nbGain, nbPixel)
-	columns_dict_pedestal = {
-		"first_event_id" :  tables.UInt64Col(),
-		"last_event_id" :  tables.UInt64Col(),
-		"pedestal" :  tables.Float32Col(shape=ped_shape)
-	}
-	description_pedestal = type('description columns_dict_pedestal', (tables.IsDescription,), columns_dict_pedestal)
-	tablePedestal = hfile.create_table(camTelGroup, 'pedestal', description_pedestal, "Table of the pedestal for high and low gain", expectedrows=1, chunkshape=1)
+	tablePedestal = createTablePedestal(hfile, camTelGroup, nbGain, nbPixel)
 	
 	if infoTabPed is not None:
 		tabPedForEntry = tablePedestal.row
@@ -119,6 +133,30 @@ def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 		tabPedForEntry["pedestal"] = tabPed
 		tabPedForEntry.append()
 		tablePedestal.flush()
+	
+	return camTelGroup
+
+
+
+def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
+	'''
+	Create the telescope group and table
+	It is important not to add an other dataset with the type of the camera to simplify the serach of a telescope by telescope index in the file structure
+	Parameters:
+	-----------
+		hfile : HDF5 file to be used
+		telId : id of the telescope
+		telInfo : table of some informations related to the telescope
+		chunkshape : shape of the chunk to be used to store the data
+	'''
+	camTelGroup = createBaseTelescopeGroupTable(hfile, telId, telInfo, chunkshape=chunkshape)
+	
+	nbGain = np.uint64(telInfo[TELINFO_NBGAIN])
+	nbPixel = np.uint64(telInfo[TELINFO_NBPIXEL])
+	nbSlice = np.uint64(telInfo[TELINFO_NBSLICE])
+	image_shape = (nbSlice, nbPixel)
+	
+	createWaveformTel(hfile, camTelGroup, nbGain, image_shape, chunkshape=chunkshape)
 
 
 def createR1Dataset(hfile, telInfo_from_evt):
