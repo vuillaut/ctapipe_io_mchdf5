@@ -62,9 +62,9 @@ def getTelescopeInfoFromEvent(inputFileName, max_nb_tel):
 			for tel_id in evt.r0.tels_with_data:
 				if not tel_id in telescope_info:
 					ref_shape = evt.mc.tel[tel_id].reference_pulse_shape
-					nb_slice = evt.r0.tel[tel_id].waveform.shape[2]
-					nbGain = evt.r0.tel[tel_id].waveform.shape[0]
-					nbPixel = evt.r0.tel[tel_id].waveform.shape[1]
+					nb_slice = evt.r1.tel[tel_id].waveform.shape[2]
+					nbGain = evt.r1.tel[tel_id].waveform.shape[0]
+					nbPixel = evt.r1.tel[tel_id].waveform.shape[1]
 					ped = evt.mc.tel[tel_id].pedestal
 					gain =  evt.mc.tel[tel_id].dc_to_pe
 					cameraRotation = evt.inst.subarray.tel[tel_id].camera.pix_rotation
