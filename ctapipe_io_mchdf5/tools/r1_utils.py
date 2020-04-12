@@ -7,10 +7,12 @@
 import numbers
 import tables
 import numpy as np
+
 try:
 	from .get_telescope_info import *
 except:
 	pass
+
 
 class TriggerInfo(tables.IsDescription):
 	'''
@@ -38,14 +40,37 @@ def createWaveformTel(hfile, telNode, nbGain, image_shape, chunkshape=1):
 		image_shape : shape of the camera images (number of slices, number of pixels)
 		chunkshape : shape of the chunk to be used to store the data
 	'''
-	columns_dict_waveform  = {"waveformHi": tables.UInt16Col(shape=image_shape)}
+	columns_dict_waveform = {"waveformHi": tables.UInt16Col(shape=image_shape)}
 	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
 	hfile.create_table(telNode, 'waveformHi', description_waveform, "Table of waveform of the high gain signal", chunkshape=chunkshape)
-	
+
 	if nbGain > 1:
 		columns_dict_waveformLo  = {"waveformLo": tables.UInt16Col(shape=image_shape)}
 		description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,), columns_dict_waveformLo)
 		hfile.create_table(telNode, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal", chunkshape=chunkshape)
+
+
+def createWaveformTelFloat(hfile, telNode, nbGain, image_shape, chunkshape=1):
+	'''
+	Create the waveform tables into the given telescope node
+	Parameters:
+		hfile : HDF5 file to be used
+		telNode : telescope to be completed
+		nbGain : number of gains of the camera
+		image_shape : shape of the camera images (number of slices, number of pixels)
+		chunkshape : shape of the chunk to be used to store the data
+	'''
+	columns_dict_waveform = {"waveformHi": tables.Float16Col(shape=image_shape)}
+	description_waveform = type('description columns_dict_waveform', (tables.IsDescription,), columns_dict_waveform)
+	hfile.create_table(telNode, 'waveformHi', description_waveform, "Table of waveform of the high gain signal",
+					   chunkshape=chunkshape)
+
+	if nbGain > 1:
+		columns_dict_waveformLo = {"waveformLo": tables.Float16Col(shape=image_shape)}
+		description_waveformLo = type('description columns_dict_waveformLo', (tables.IsDescription,),
+									  columns_dict_waveformLo)
+		hfile.create_table(telNode, 'waveformLo', description_waveformLo, "Table of waveform of the low gain signal",
+						   chunkshape=chunkshape)
 
 
 def createTablePedestal(hfile, camTelGroup, nbGain, nbPixel):
@@ -85,22 +110,22 @@ def createBaseTelescopeGroupTable(hfile, telId, telInfo, chunkshape=1):
 	'''
 	telIndex = telId - 1
 	camTelGroup = hfile.create_group("/r1", "Tel_"+str(telId), 'Data of telescopes '+str(telId))
-	
+
 	telType = np.uint64(telInfo[TELINFO_TELTYPE])
-	
+
 	nbGain = np.uint64(telInfo[TELINFO_NBGAIN])
 	nbSlice = np.uint64(telInfo[TELINFO_NBSLICE])
-	
+
 	infoTabGain = telInfo[TELINFO_GAIN]
 	tabGain = np.asarray(infoTabGain, dtype=np.float32)
-	
+
 	infoTabPed = telInfo[TELINFO_PEDESTAL]
 	tabPed = np.asarray(infoTabPed, dtype=np.float32)
-	
+
 	nbPixel = np.uint64(telInfo[TELINFO_NBPIXEL])
-	
+
 	nbEvent = np.uint64(telInfo[TELINFO_NBEVENT])
-	
+
 	hfile.create_array(camTelGroup, 'nbPixel', nbPixel, "Number of pixels of the telescope")
 	hfile.create_array(camTelGroup, 'nbSlice', nbSlice, "Number of slices of the telescope")
 	hfile.create_array(camTelGroup, 'nbGain', nbGain, "Number of gain (channels) of the telescope")
@@ -108,24 +133,24 @@ def createBaseTelescopeGroupTable(hfile, telId, telInfo, chunkshape=1):
 	hfile.create_array(camTelGroup, 'telIndex', telIndex, "Index of the telescope")
 	hfile.create_array(camTelGroup, 'telType', telType, "Type of the telescope (0 : LST, 1 : NECTAR, 2 : FLASH, 3 : SCT, 4 : ASTRI, 5 : DC, 6 : GCT)")
 	hfile.create_array(camTelGroup, 'telId', telId, "Id of the telescope")
-	
+
 	infoRefShape = telInfo[TELINFO_REFSHAPE]
 	tabRefShape = np.asarray(infoRefShape, dtype=np.float32)
 	if infoRefShape is not None:
 		nbSample = np.uint64(tabRefShape.shape[1])
 		hfile.create_array(camTelGroup, 'tabRefShape', tabRefShape, "Reference pulse shape of the pixel of the telescope (channel, pixel, sample)")
-	
+
 	if infoTabGain is not None:
 		hfile.create_array(camTelGroup, 'tabGain', tabGain, "Table of the gain of the telescope (channel, pixel)")
-	
+
 	hfile.create_table(camTelGroup, 'trigger', TriggerInfo, "Trigger of the telescope events", chunkshape=chunkshape)
-	
+
 	columns_dict_photo_electron_image  = {"photo_electron_image": tables.Float32Col(shape=nbPixel)}
 	description_photo_electron_image = type('description columns_dict_photo_electron_image', (tables.IsDescription,), columns_dict_photo_electron_image)
 	hfile.create_table(camTelGroup, 'photo_electron_image', description_photo_electron_image, "Table of real signal in the camera (for simulation only)", chunkshape=chunkshape)
-	
+
 	tablePedestal = createTablePedestal(hfile, camTelGroup, nbGain, nbPixel)
-	
+
 	if infoTabPed is not None:
 		tabPedForEntry = tablePedestal.row
 		tabPedForEntry["first_event_id"] = np.uint64(0)
@@ -133,7 +158,7 @@ def createBaseTelescopeGroupTable(hfile, telId, telInfo, chunkshape=1):
 		tabPedForEntry["pedestal"] = tabPed
 		tabPedForEntry.append()
 		tablePedestal.flush()
-	
+
 	return camTelGroup
 
 
@@ -150,13 +175,13 @@ def createTelGroupAndTable(hfile, telId, telInfo, chunkshape=1):
 		chunkshape : shape of the chunk to be used to store the data
 	'''
 	camTelGroup = createBaseTelescopeGroupTable(hfile, telId, telInfo, chunkshape=chunkshape)
-	
+
 	nbGain = np.uint64(telInfo[TELINFO_NBGAIN])
 	nbPixel = np.uint64(telInfo[TELINFO_NBPIXEL])
 	nbSlice = np.uint64(telInfo[TELINFO_NBSLICE])
 	image_shape = (nbSlice, nbPixel)
-	
-	createWaveformTel(hfile, camTelGroup, nbGain, image_shape, chunkshape=chunkshape)
+
+	createWaveformTelFloat(hfile, camTelGroup, nbGain, image_shape, chunkshape=chunkshape)
 
 
 def createR1Dataset(hfile, telInfo_from_evt):
@@ -168,7 +193,7 @@ def createR1Dataset(hfile, telInfo_from_evt):
 	'''
 	#Group : r1
 	hfile.create_group("/", 'r1', 'Raw data waveform informations of the run')
-	
+
 	#The group in the r1 group will be completed on the fly with the informations collected in telInfo_from_evt
 	for telId, telInfo in telInfo_from_evt.items():
 		createTelGroupAndTable(hfile, telId, telInfo)
@@ -188,8 +213,8 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 	'''
 	tabtrigger = telNode.trigger.row
 	tabtrigger['event_id'] = eventId
-	
-	
+
+
 	#TODO : use the proper convertion from timeStamp to the time in second and nanosecond
 	if isinstance(timeStamp, numbers.Number):
 		timeSecond = int(timeStamp)
@@ -197,21 +222,24 @@ def appendWaveformInTelescope(telNode, waveform, photo_electron_image, eventId, 
 		tabtrigger['time_s'] = timeSecond
 		tabtrigger['time_qns'] = timeMicroSec
 	tabtrigger.append()
-	
+
 	tabWaveformHi = telNode.waveformHi.row
-	tabWaveformHi['waveformHi'] = waveform[0].swapaxes(0, 1)
-	tabWaveformHi.append()
-	
-	if waveform.shape[0] > 1:
-		tabWaveformLo = telNode.waveformLo.row
-		tabWaveformLo['waveformLo'] = waveform[1].swapaxes(0, 1)
-		tabWaveformLo.append()
-	
-	if photo_electron_image is not None and isinstance(photo_electron_image, list):
-		tabPhotoElectronImage = telNode.photo_electron_image.row
-		tabPhotoElectronImage["photo_electron_image"] = photo_electron_image
-		tabPhotoElectronImage.append()
-	
+	if waveform.ndim == 3:
+		tabWaveformHi['waveformHi'] = waveform[0].swapaxes(0, 1)
+		tabWaveformHi.append()
+
+		if waveform.shape[0] > 1:
+			tabWaveformLo = telNode.waveformLo.row
+			tabWaveformLo['waveformLo'] = waveform[1].swapaxes(0, 1)
+			tabWaveformLo.append()
+
+		if photo_electron_image is not None and isinstance(photo_electron_image, list):
+			tabPhotoElectronImage = telNode.photo_electron_image.row
+			tabPhotoElectronImage["photo_electron_image"] = photo_electron_image
+			tabPhotoElectronImage.append()
+	elif waveform.ndim == 2:
+		tabWaveformHi['waveformHi'] = waveform.swapaxes(0, 1)
+		tabWaveformHi.append()
 
 
 def appendEventTelescopeData(hfile, event):
@@ -229,6 +257,23 @@ def appendEventTelescopeData(hfile, event):
 		telNode = hfile.get_node("/r1", 'Tel_' + str(telId))
 		photo_electron_image = event.mc.tel[telId].photo_electron_image
 		appendWaveformInTelescope(telNode, waveform, photo_electron_image, event.r0.event_id, event.trig.gps_time.value)
+
+
+def write_dl0(hfile, event):
+	'''
+	write DL0 data from event in file
+
+	--------------
+	Parameters :
+		hfile : HDF5 file to be used
+		event : current event
+	'''
+	tabTelWithData = event.r0.tels_with_data
+	dicoTel = event.dl0.tel
+	for telId in tabTelWithData:
+		waveform = dicoTel[telId].waveform
+		telNode = hfile.get_node("/r1", 'Tel_' + str(telId))
+		appendWaveformInTelescope(telNode, waveform, None, event.r0.event_id, event.trig.gps_time.value)
 
 
 def flushR1Tables(hfile):
