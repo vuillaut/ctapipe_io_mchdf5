@@ -50,7 +50,7 @@ def main():
     parser.add_argument('-o', '--output', help="hdf5 r1 output file",
                         required=True)
     parser.add_argument('-m', '--max_event', help="maximum event to reconstruct",
-                        required=False, type=int)
+                        required=False, type=int, default=None)
     parser.add_argument('-c', '--compression',
                         help="compression level for the output file [0 (No compression), 1 - 9]. Default = 6",
                         required=False, type=int, default='6')
@@ -80,6 +80,16 @@ def main():
                         )
 
     args = parser.parse_args()
+
+    if args.config_file is not None:
+        try:
+            custom_config = read_configuration_file(args.config_file)
+        except("Custom configuration could not be loaded !!!"):
+            pass
+        config = replace_config(standard_config, custom_config)
+    else:
+        config = standard_config
+
 
     inputFileName = args.input
     nbTel = getNbTel(inputFileName)
@@ -111,7 +121,11 @@ def main():
         print('Fill the simulation header information')
         fillSimulationHeaderInfo(hfile, inputFileName)
 
-    source = event_source(inputFileName, max_events=None)
+    if args.max_event is not None:
+        max_events = args.max_event
+    else:
+        max_events = config['max_events']
+    source = event_source(inputFileName, max_events=max_events)
 
     nb_event = 0
     # max_event = args.max_event
@@ -123,14 +137,6 @@ def main():
     if isSimulationMode:
         cal = CameraCalibrator()
     else:
-        if args.config_file is not None:
-                try:
-                    custom_config = read_configuration_file(args.config_file)
-                except("Custom configuration could not be loaded !!!"):
-                    pass
-                config = replace_config(standard_config, custom_config)
-        else:
-            config = standard_config
 
         r0_r1_calibrator = LSTR0Corrections(pedestal_path=args.pedestal_path,
                                             tel_id=1)
