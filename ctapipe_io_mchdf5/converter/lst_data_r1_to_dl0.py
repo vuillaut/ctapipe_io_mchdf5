@@ -171,6 +171,8 @@ def main():
         tableMcCorsikaEvent.flush()
 
     flushR1Tables(hfile)
+    # move R1 to DL0 ;-)
+    hfile.root.r1._f_move(newname='dl0')
     hfile.close()
     print('\nDone')
 
